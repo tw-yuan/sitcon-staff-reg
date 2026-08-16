@@ -1,0 +1,59 @@
+<%
+  var v = values[f.key];
+  var selected = Array.isArray(v) ? v.map(String) : (v !== undefined && v !== '' ? [String(v)] : []);
+%>
+<% if (f.type === 'statement') { %>
+<div class="statement">
+  <% if (f.label) { %><h3 class="statement-title"><%= f.label %></h3><% } %>
+  <% if (f.content) { %><div class="statement-body"><%= f.content %></div><% } %>
+  <% if (f.imagePath) { %><figure class="form-image"><img src="<%= f.imagePath %>" alt="" loading="lazy"></figure><% } %>
+</div>
+<% } else if (f.type === 'image') { %>
+<figure class="form-image">
+  <% if (f.imagePath) { %><img src="<%= f.imagePath %>" alt="<%= f.label %>" loading="lazy"><% } %>
+  <% if (f.label) { %><figcaption class="muted small"><%= f.label %></figcaption><% } %>
+</figure>
+<% } else { %>
+<div class="field <%= errors[f.key] ? 'has-error' : '' %>">
+  <% if (f.imagePath) { %><figure class="form-image field-image"><img src="<%= f.imagePath %>" alt="" loading="lazy"></figure><% } %>
+  <label><%= f.label %><% if (f.required) { %> <span class="req">*</span><% } %></label>
+  <% if (f.helpText) { %><p class="help"><%= f.helpText %></p><% } %>
+
+  <% if (f.type === 'short_text') { %>
+    <input type="text" name="<%= f.key %>" value="<%= v || '' %>" <% if (f.regex) { %>data-regex="<%= f.regex %>" data-regex-msg="<%= f.regexMessage %>"<% } %> <%= f.required ? 'required' : '' %>>
+  <% } else if (f.type === 'paragraph') { %>
+    <textarea name="<%= f.key %>" rows="4" <% if (f.regex) { %>data-regex="<%= f.regex %>" data-regex-msg="<%= f.regexMessage %>"<% } %> <%= f.required ? 'required' : '' %>><%= v || '' %></textarea>
+  <% } else if (f.type === 'number') { %>
+    <input type="number" step="any" name="<%= f.key %>" value="<%= v || '' %>" <%= f.required ? 'required' : '' %>>
+  <% } else if (f.type === 'date') { %>
+    <input type="date" name="<%= f.key %>" value="<%= v || '' %>" <%= f.required ? 'required' : '' %>>
+  <% } else if (f.type === 'dropdown') { %>
+    <select name="<%= f.key %>" <%= f.required ? 'required' : '' %>>
+      <option value="">請選擇</option>
+      <% f.options.forEach(function (o) { %><option value="<%= o %>" <%= selected.indexOf(o) >= 0 ? 'selected' : '' %>><%= o %></option><% }); %>
+      <% if (f.allowOther) { %><option value="__other__" <%= selected.indexOf('__other__') >= 0 ? 'selected' : '' %>>其他…</option><% } %>
+    </select>
+    <% if (f.allowOther) { %><input type="text" name="<%= f.key %>__other" value="<%= values[f.key + '__other'] || '' %>" placeholder="若選「其他」請填寫" style="margin-top:6px"><% } %>
+  <% } else if (f.type === 'single_select') { %>
+    <% f.options.forEach(function (o, oi) { %>
+      <label class="opt"><input type="radio" name="<%= f.key %>" value="<%= o %>" <%= selected.indexOf(o) >= 0 ? 'checked' : '' %> <%= f.required && oi === 0 ? 'required' : '' %> <% if (f.optionJumps[o]) { %>data-jump="<%= f.optionJumps[o] %>"<% } %>> <%= o %></label>
+    <% }); %>
+    <% if (f.allowOther) { %>
+      <label class="opt"><input type="radio" name="<%= f.key %>" value="__other__" <%= selected.indexOf('__other__') >= 0 ? 'checked' : '' %>> 其他：</label>
+      <input type="text" name="<%= f.key %>__other" value="<%= values[f.key + '__other'] || '' %>" placeholder="請填寫">
+    <% } %>
+  <% } else if (f.type === 'multi_select') { %>
+    <% f.options.forEach(function (o, oi) { %>
+      <label class="opt"><input type="checkbox" name="<%= f.key %>" value="<%= o %>" <%= selected.indexOf(o) >= 0 ? 'checked' : '' %> <%= f.required && oi === 0 ? 'required' : '' %>> <%= o %></label>
+    <% }); %>
+    <% if (f.allowOther) { %>
+      <label class="opt"><input type="checkbox" name="<%= f.key %>" value="__other__" <%= selected.indexOf('__other__') >= 0 ? 'checked' : '' %>> 其他：</label>
+      <input type="text" name="<%= f.key %>__other" value="<%= values[f.key + '__other'] || '' %>" placeholder="請填寫">
+    <% } %>
+  <% } else if (f.type === 'file') { %>
+    <input type="file" name="<%= f.key %>" <%= f.required ? 'required' : '' %>>
+  <% } %>
+
+  <% if (errors[f.key]) { %><p class="err"><%= errors[f.key] %></p><% } %>
+</div>
+<% } %>

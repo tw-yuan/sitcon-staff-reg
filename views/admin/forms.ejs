@@ -1,0 +1,114 @@
+<%- include('../partials/header', { title: '表單設定', flash: flash }) %>
+<div class="card">
+  <div class="admin-top">
+    <h1>表單設定（Form Builder）</h1>
+    <a href="/admin">← 返回後台</a>
+  </div>
+  <p class="muted">像 Google 表單一樣自訂欄位與「區塊」。帳號欄位（Email / GitHub / GitLab / Telegram）由 OAuth 自動帶入，不在此。<strong>單選題</strong>可設「每個選項前往哪個區塊」做分段跳轉。</p>
+
+  <% grouped.forEach(function (g) { var section = g.section; %>
+    <div class="fb-section">
+      <div class="fb-section-head">
+        <form method="post" action="/admin/forms/sections/<%= section.id %>/update" class="inline">
+          <strong>區塊 #<%= section.id %></strong>
+          <input type="text" name="title" value="<%= section.title %>" placeholder="區塊標題">
+          <textarea name="description" rows="2" placeholder="區塊說明（選填，可換行）"><%= section.description %></textarea>
+          <button class="btn small" type="submit">儲存區塊</button>
+        </form>
+        <span class="inline">
+          <form method="post" action="/admin/forms/sections/<%= section.id %>/move" class="inline"><input type="hidden" name="dir" value="up"><button class="btn small" type="submit">▲</button></form>
+          <form method="post" action="/admin/forms/sections/<%= section.id %>/move" class="inline"><input type="hidden" name="dir" value="down"><button class="btn small" type="submit">▼</button></form>
+          <form method="post" action="/admin/forms/sections/<%= section.id %>/delete" class="inline" onsubmit="return confirm('刪除此區塊？裡面的欄位會移到第一區塊')"><button class="btn small danger" type="submit">刪除區塊</button></form>
+        </span>
+      </div>
+
+      <% g.fields.forEach(function (f) { %>
+        <div class="fb-field">
+          <form method="post" action="/admin/forms/<%= f.id %>/update" class="fb-form">
+            <div class="fb-row">
+              <input type="text" name="label" value="<%= f.label %>" placeholder="欄位標題" required>
+              <select name="type" class="js-type">
+                <% types.forEach(function (t) { %><option value="<%= t %>" <%= f.type === t ? 'selected' : '' %>><%= typeLabels[t] %></option><% }); %>
+              </select>
+              <label class="chk"><input type="checkbox" name="required" <%= f.required ? 'checked' : '' %>> 必填</label>
+              <label class="chk"><input type="checkbox" name="worker_editable" <%= f.workerEditable ? 'checked' : '' %>> 允許工人事後修改</label>
+            </div>
+            <textarea name="help_text" rows="2" placeholder="說明文字（選填，可換行）"><%= f.helpText %></textarea>
+            <label class="fb-inline">所屬區塊
+              <select name="section_id">
+                <% sections.forEach(function (s) { %><option value="<%= s.id %>" <%= f.sectionId === s.id ? 'selected' : '' %>>#<%= s.id %> <%= s.title %></option><% }); %>
+              </select>
+            </label>
+            <div class="js-options" style="<%= ['single_select','multi_select','dropdown'].indexOf(f.type) >= 0 ? '' : 'display:none' %>">
+              <textarea name="options" rows="3" placeholder="每行一個選項"><%= f.options.join('\n') %></textarea>
+              <label class="chk"><input type="checkbox" name="allow_other" <%= f.allowOther ? 'checked' : '' %>> 允許「其他」自由填寫</label>
+            </div>
+            <div class="js-jumps" style="<%= f.type === 'single_select' ? '' : 'display:none' %>">
+              <label class="small muted">依選項跳段（每行「選項 = 區塊id 或 submit」；未列的照順序往下）</label>
+              <textarea name="option_jumps" rows="2" placeholder="是 = 2&#10;否 = submit"><%= Object.keys(f.optionJumps).map(function (o) { return o + ' = ' + f.optionJumps[o]; }).join('\n') %></textarea>
+            </div>
+            <div class="js-regex" style="<%= ['short_text','paragraph'].indexOf(f.type) >= 0 ? '' : 'display:none' %>">
+              <input type="text" name="regex" value="<%= f.regex %>" placeholder="regex 驗證（選填）">
+              <input type="text" name="regex_message" value="<%= f.regexMessage %>" placeholder="驗證失敗訊息（選填）">
+            </div>
+            <div class="js-content" style="<%= f.type === 'statement' ? '' : 'display:none' %>">
+              <textarea name="content" rows="3" placeholder="文字說明的內文（可換行）"><%= f.content %></textarea>
+            </div>
+            <div class="fb-image" tabindex="0">
+              <span class="muted small">圖片（可上傳，或點一下後 Ctrl+V 貼上）：</span>
+              <input type="hidden" name="image_path" value="<%= f.imagePath %>">
+              <div class="fb-image-preview"><% if (f.imagePath) { %><img src="<%= f.imagePath %>"><% } %></div>
+              <label class="btn small">上傳圖片<input type="file" accept="image/*" class="fb-image-file" hidden></label>
+              <button type="button" class="btn small fb-image-remove"<%= f.imagePath ? '' : ' hidden' %>>移除圖片</button>
+            </div>
+            <button class="btn" type="submit">儲存</button>
+          </form>
+          <div class="fb-side">
+            <form method="post" action="/admin/forms/<%= f.id %>/move"><input type="hidden" name="dir" value="up"><button class="btn small" type="submit">▲</button></form>
+            <form method="post" action="/admin/forms/<%= f.id %>/move"><input type="hidden" name="dir" value="down"><button class="btn small" type="submit">▼</button></form>
+            <form method="post" action="/admin/forms/<%= f.id %>/delete" onsubmit="return confirm('確定刪除此欄位？')"><button class="btn small danger" type="submit">刪除</button></form>
+          </div>
+        </div>
+      <% }); %>
+      <% if (!g.fields.length) { %><p class="muted small">（此區塊尚無欄位）</p><% } %>
+    </div>
+  <% }); %>
+
+  <h2>新增區塊</h2>
+  <form method="post" action="/admin/forms/sections" class="inline">
+    <input type="text" name="title" placeholder="區塊標題" required>
+    <textarea name="description" rows="2" placeholder="區塊說明（選填，可換行）"></textarea>
+    <button class="btn primary" type="submit">新增區塊</button>
+  </form>
+
+  <h2>新增欄位</h2>
+  <form method="post" action="/admin/forms" class="fb-form fb-new">
+    <div class="fb-row">
+      <input type="text" name="label" placeholder="欄位標題" required>
+      <select name="type" class="js-type">
+        <% types.forEach(function (t) { %><option value="<%= t %>"><%= typeLabels[t] %></option><% }); %>
+      </select>
+      <label class="chk"><input type="checkbox" name="required" checked> 必填</label>
+      <label class="chk"><input type="checkbox" name="worker_editable"> 允許工人事後修改</label>
+    </div>
+    <textarea name="help_text" rows="2" placeholder="說明文字（選填，可換行）"></textarea>
+    <label class="fb-inline">所屬區塊
+      <select name="section_id">
+        <% sections.forEach(function (s) { %><option value="<%= s.id %>">#<%= s.id %> <%= s.title %></option><% }); %>
+      </select>
+    </label>
+    <div class="js-options" style="display:none"><textarea name="options" rows="3" placeholder="每行一個選項"></textarea><label class="chk"><input type="checkbox" name="allow_other"> 允許「其他」自由填寫</label></div>
+    <div class="js-jumps" style="display:none"><label class="small muted">依選項跳段（每行「選項 = 區塊id 或 submit」）</label><textarea name="option_jumps" rows="2" placeholder="是 = 2&#10;否 = submit"></textarea></div>
+    <div class="js-regex"><input type="text" name="regex" placeholder="regex 驗證（選填）"><input type="text" name="regex_message" placeholder="驗證失敗訊息（選填）"></div>
+    <div class="js-content" style="display:none"><textarea name="content" rows="3" placeholder="文字說明的內文（可換行）"></textarea></div>
+    <div class="fb-image" tabindex="0">
+      <span class="muted small">圖片（可上傳，或點一下後 Ctrl+V 貼上）：</span>
+      <input type="hidden" name="image_path" value="">
+      <div class="fb-image-preview"></div>
+      <label class="btn small">上傳圖片<input type="file" accept="image/*" class="fb-image-file" hidden></label>
+      <button type="button" class="btn small fb-image-remove" hidden>移除圖片</button>
+    </div>
+    <button class="btn primary" type="submit">新增欄位</button>
+  </form>
+</div>
+<%- include('../partials/footer') %>

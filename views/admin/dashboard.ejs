@@ -1,0 +1,72 @@
+<%- include('../partials/header', { title: '審核後台', flash: flash }) %>
+<div class="card">
+  <div class="admin-top">
+    <h1>審核後台</h1>
+    <div class="admin-nav">
+      <span class="muted"><%= admin.email %></span>
+      · <a href="/admin/forms">表單設定</a>
+      · <a href="/admin/workgroups">工作組</a>
+      · <a href="/admin/settings">系統設定</a>
+      · <a href="/admin/logout">登出</a>
+    </div>
+  </div>
+
+  <div class="features">
+    <% features.forEach(function (f) { %>
+      <span class="badge <%= f.ok ? 'ok' : 'warn' %>"><%= f.key %> <%= f.ok ? '✓' : '✗' %></span>
+    <% }); %>
+  </div>
+
+  <div class="notice <%= formOpen ? '' : 'danger' %>">
+    <p>
+      表單狀態：
+      <% if (formOpen) { %><span class="status approved">開放中</span>（工人可新填、可用修改連結編輯）
+      <% } else { %><span class="status rejected">已截止</span>（工人無法新填、也無法修改）<% } %>
+    </p>
+    <div class="test-bar">
+      <% if (formOpen) { %>
+        <form method="post" action="/admin/form-state" onsubmit="return confirm('確定要截止表單？工人將無法再新填或修改。')">
+          <input type="hidden" name="open" value="0"><button class="btn small danger" type="submit">截止表單</button>
+        </form>
+      <% } else { %>
+        <form method="post" action="/admin/form-state">
+          <input type="hidden" name="open" value="1"><button class="btn small primary" type="submit">重新開放表單</button>
+        </form>
+      <% } %>
+    </div>
+    <form method="post" action="/admin/form-closed-message" class="test-bar">
+      <input type="text" name="message" value="<%= closedMessage %>" style="flex:1;min-width:220px;padding:8px 11px;border:1px solid var(--border-strong);border-radius:8px" placeholder="截止時顯示給工人的訊息">
+      <button class="btn small" type="submit">儲存截止訊息</button>
+    </form>
+  </div>
+
+  <form class="filter" method="get" action="/admin">
+    <input type="text" name="q" value="<%= q %>" placeholder="搜尋 email / GitHub / GitLab">
+    <select name="status">
+      <option value="">全部狀態</option>
+      <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>待審核</option>
+      <option value="approved" <%= status === 'approved' ? 'selected' : '' %>>已核准</option>
+      <option value="rejected" <%= status === 'rejected' ? 'selected' : '' %>>已退回</option>
+    </select>
+    <button class="btn" type="submit">篩選</button>
+  </form>
+
+  <div class="table-scroll">
+    <table class="tbl">
+      <thead><tr><th>時間</th><th>暱稱</th><th>Email</th><th>狀態</th><th></th></tr></thead>
+      <tbody>
+        <% submissions.forEach(function (s) { %>
+          <tr>
+            <td class="small"><%= s.createdAt %></td>
+            <td><%= s.nickname || '—' %></td>
+            <td><%= s.googleEmail %></td>
+            <td><span class="status <%= s.status %>"><%= s.status === 'pending' ? '待審核' : s.status === 'approved' ? '已核准' : '已退回' %></span></td>
+            <td><a class="btn small" href="/admin/submissions/<%= s.id %>">查看</a></td>
+          </tr>
+        <% }); %>
+        <% if (!submissions.length) { %><tr><td colspan="5" class="muted">目前沒有資料</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

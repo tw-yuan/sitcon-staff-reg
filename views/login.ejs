@@ -1,0 +1,37 @@
+<%- include('partials/header', { title: 'SITCON 2027 工人登錄', flash: flash }) %>
+<div class="card">
+  <h1>SITCON 2027 工人登錄</h1>
+  <p>請依序用以下四個帳號登入，系統會自動帶入你已驗證的帳號，避免打錯。</p>
+  <ul class="provider-list">
+    <% providers.forEach(function(p){ %>
+      <li class="provider <%= p.linked ? 'done' : '' %>">
+        <span class="provider-name">
+          <%= p.name === 'google' ? 'Google（Email）' : p.name === 'github' ? 'GitHub' : 'GitLab' %>
+        </span>
+        <% if (p.linked) { %>
+          <span class="badge ok">✓ <%= p.value %></span>
+        <% } else if (!p.configured) { %>
+          <span class="badge warn">尚未設定</span>
+        <% } else { %>
+          <a class="btn" href="/auth/<%= p.name %>">登入</a>
+        <% } %>
+      </li>
+    <% }); %>
+    <li class="provider <%= telegram.linked ? 'done' : '' %>">
+      <span class="provider-name">Telegram</span>
+      <% if (telegram.linked) { %>
+        <span class="badge ok">✓ <%= telegram.value %></span>
+      <% } else if (!telegram.configured) { %>
+        <span class="badge warn">尚未設定</span>
+      <% } else { %>
+        <button type="button" class="btn tg js-tg-login" data-bot-id="<%= telegram.botId %>">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M21.94 4.39 18.9 19.1c-.23 1.02-.84 1.27-1.7.79l-4.7-3.46-2.27 2.18c-.25.25-.46.46-.94.46l.33-4.77 8.68-7.84c.38-.34-.08-.53-.59-.19L6.98 13.4l-4.63-1.45c-1.01-.32-1.03-1.01.21-1.5l18.1-6.98c.84-.31 1.58.2 1.28 1.42Z"/></svg>
+          登入
+        </button>
+        <script async src="https://telegram.org/js/telegram-widget.js?22"></script>
+      <% } %>
+    </li>
+  </ul>
+  <p class="muted">四個帳號都連結完成後即可開始填寫表單。</p>
+</div>
+<%- include('partials/footer') %>

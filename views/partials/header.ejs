@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f4f6fb">
+  <title><%= typeof title !== 'undefined' ? title : 'SITCON 2027 工人登錄' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="flash webview-banner" id="webview-banner" hidden>
+      <strong>偵測到 App 內建瀏覽器</strong>（Telegram / LINE 等），登入或部分功能可能無法使用，建議改用外部瀏覽器開啟。
+      <div class="webview-actions">
+        <button type="button" class="btn" id="webview-open">用外部瀏覽器開啟</button>
+        <button type="button" class="btn" id="webview-copy">複製網址</button>
+      </div>
+      <div class="small">按鈕沒反應的話，請點右上角「⋯」選單 →「在瀏覽器中開啟」。</div>
+    </div>
+    <% if (typeof flash !== 'undefined' && flash) { %>
+      <div class="flash"><%= flash %></div>
+    <% } %>

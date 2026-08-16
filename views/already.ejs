@@ -1,0 +1,38 @@
+<%- include('partials/header', { title: '你已完成登錄', flash: flash }) %>
+<div class="card">
+  <h1>登錄完成 🎉</h1>
+  <% if (submission.status === 'approved') { %>
+    <p>你已完成工人登錄，目前狀態為「<strong>已核准</strong>」，權限已開通 🎉</p>
+  <% } else if (submission.status === 'rejected') { %>
+    <p>你的工人登錄目前狀態為「<strong>已退回</strong>」。</p>
+    <% if (submission.rejectReason) { %><p class="muted">退回原因：<%= submission.rejectReason %></p><% } %>
+    <p>請聯絡行政組協助處理。</p>
+  <% } else { %>
+    <p>我們已收到你的登錄，目前狀態為「<strong>待審核</strong>」。行政組核准並開通權限後，會再寄一封通知信給你。</p>
+  <% } %>
+
+  <% if (typeof editable !== 'undefined' && editable && typeof editLink !== 'undefined' && editLink) { %>
+    <div class="notice">
+      <p><strong>想修改部分偏好（如室友、工人福利等）？</strong><br>用這個專屬連結（也已寄到你的信箱）：</p>
+      <p><a class="btn primary" href="<%= editLink %>">開啟我的修改連結</a></p>
+      <p class="muted small" style="word-break:break-all"><%= editLink %></p>
+    </div>
+  <% } else { %>
+    <p class="muted">每人僅能登錄一次。若需修改資料，請聯絡行政組協助。</p>
+  <% } %>
+
+  <div class="notice">
+    <p>加入工人大群了嗎(?) 還沒的話快加！</p>
+    <p>
+      也可以翻翻新人手冊喔！<br>
+      連結：<a href="https://hackmd.io/@SITCON/BkkzOkSRo" target="_blank" rel="noopener">https://hackmd.io/@SITCON/BkkzOkSRo</a>
+    </p>
+    <p>
+      在參與 SITCON 各種活動前，也要記得了解行為準則~<br>
+      連結：<a href="https://sitcon.org/code-of-conduct" target="_blank" rel="noopener">https://sitcon.org/code-of-conduct</a>
+    </p>
+  </div>
+
+  <p><a href="/logout" class="btn">登出</a></p>
+</div>
+<%- include('partials/footer') %>

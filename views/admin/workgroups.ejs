@@ -1,0 +1,67 @@
+<%- include('../partials/header', { title: '工作組與權限範本', flash: flash }) %>
+<div class="card">
+  <div class="admin-top">
+    <h1>工作組與權限範本</h1>
+    <a href="/admin">← 返回後台</a>
+  </div>
+
+  <% groups.forEach(function (g) { %>
+    <div class="wg">
+      <div class="wg-head">
+        <form method="post" action="/admin/workgroups/<%= g.id %>/rename" class="inline">
+          <input type="text" name="name" value="<%= g.name %>"><button class="btn small" type="submit">改名</button>
+          <% if (defaultWorkgroupId === g.id) { %><span class="badge ok">預設</span><% } %>
+        </form>
+        <span class="inline">
+          <% if (defaultWorkgroupId === g.id) { %>
+            <form method="post" action="/admin/workgroups/<%= g.id %>/unset-default" class="inline"><button class="btn small" type="submit">取消預設</button></form>
+          <% } else { %>
+            <form method="post" action="/admin/workgroups/<%= g.id %>/default" class="inline"><button class="btn small" type="submit">設為預設</button></form>
+          <% } %>
+          <form method="post" action="/admin/workgroups/<%= g.id %>/delete" onsubmit="return confirm('刪除工作組？')"><button class="btn small danger" type="submit">刪除工作組</button></form>
+        </span>
+      </div>
+      <div class="table-scroll">
+      <table class="tbl">
+        <thead><tr><th>平台</th><th>目標</th><th>角色</th><th></th></tr></thead>
+        <tbody>
+          <% g.grants.forEach(function (gr) { %>
+            <tr>
+              <td><%= platformLabels[gr.platform] %></td>
+              <td><% if (gr.platform === 'note') { %><%= gr.target %><% } else { %><code><%= gr.target %></code><% } %></td>
+              <td><%= gr.platform === 'note' ? '—' : gr.role %></td>
+              <td><form method="post" action="/admin/workgroups/grants/<%= gr.id %>/delete"><button class="btn small danger" type="submit">×</button></form></td>
+            </tr>
+          <% }); %>
+          <% if (!g.grants.length) { %><tr><td colspan="4" class="muted">尚無權限項目</td></tr><% } %>
+        </tbody>
+      </table>
+      </div>
+      <form method="post" action="/admin/workgroups/<%= g.id %>/grants" class="grant-form">
+        <select name="platform"><% platforms.forEach(function (p) { %><option value="<%= p %>"><%= platformLabels[p] %></option><% }); %></select>
+        <input type="text" name="target" placeholder="目標；選「自訂通知」時填要放進核准信的文字">
+        <input type="text" name="role" placeholder="角色（自訂通知可留空）">
+        <button class="btn" type="submit">新增</button>
+      </form>
+    </div>
+  <% }); %>
+
+  <h2>新增工作組</h2>
+  <form method="post" action="/admin/workgroups" class="inline">
+    <input type="text" name="name" placeholder="工作組名稱" required><button class="btn primary" type="submit">新增</button>
+  </form>
+
+  <p class="muted mt">
+    target 慣例：
+    <strong>Google Drive</strong> 用資料夾 ID。role 可填
+    <code>檢視者</code>、<code>加註者</code>、<code>協作者</code>（=writer，預設）、
+    <code>內容管理員</code>（=fileOrganizer）、<code>管理員</code>（=organizer）；
+    ⚠️ <code>內容管理員</code>／<code>管理員</code> 只適用於「共用雲端硬碟」內的資料夾，一般「我的雲端硬碟」資料夾會被 Google 拒絕；
+    且服務帳號本身需為該共用雲端硬碟成員且權限 ≥ 內容管理員。
+    未知的 role 會退回 <code>協作者</code>。
+    <br><strong>Google Groups</strong> 用群組 email（role 預設 <code>MEMBER</code>）；
+    <strong>GitLab</strong> 用 project 的 path 或 ID（加 <code>group:</code> 前綴則改成 group；role 填 <code>developer</code>）。
+    <br><strong>自訂通知（不開通）</strong>：<strong>不會自動開通</strong>，只把你填在「目標」的文字列進核准通知信的「已為你開通」清單裡（和自動開通的項目放一起）；適合需手動處理的權限（例如手動加的 Google Group）。role 留空。
+  </p>
+</div>
+<%- include('../partials/footer') %>

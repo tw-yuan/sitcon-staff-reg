@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-9000}:3000"
+    # .env 為可選——不存在也能啟動（改用網頁「系統設定」）。
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # 容器固定監聽 3000（對外埠在上面的 ports 設定，目前 9000）
+      # BASE_URL = 公開網域（OAuth callback / Telegram setdomain 都依此組成）；可用環境變數或後台「系統設定」覆蓋
+      - BASE_URL=${BASE_URL:-https://sitcon-reg.yuan-tw.net}
+      - DATABASE_FILE=/app/data/app.db
+      - GOOGLE_SERVICE_ACCOUNT_KEY_FILE=/app/secrets/service-account.json
+    volumes:
+      - ./data:/app/data
+      - ./secrets:/app/secrets:ro
+    restart: unless-stopped

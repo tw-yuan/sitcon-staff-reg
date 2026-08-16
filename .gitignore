@@ -1,0 +1,13 @@
+node_modules/
+dist/
+data/
+secrets/
+.env
+*.log
+.DS_Store
+.claude/settings.local.json
+
+# 部署識別資訊，僅留本機（勿入公開 repo）
+teach.md
+scripts/firewall.sh
+scripts/sitcon-reg-firewall.service

@@ -1,0 +1,52 @@
+<%- include('partials/header', { title: '我的登錄資料', flash: flash }) %>
+<div class="card">
+  <h1>我的登錄資料</h1>
+  <p class="muted">這裡可以查看你填寫的內容，並修改開放編輯的欄位（標示「可修改」）。此連結專屬於你，請勿轉發他人。</p>
+
+  <% if (saved) { %>
+    <div class="notice"><p>✅ 已儲存你的修改，感謝！</p></div>
+  <% } %>
+
+  <section class="identity">
+    <div class="ro"><label>Email</label><input value="<%= sub.googleEmail %>" readonly></div>
+    <div class="ro"><label>GitHub</label><input value="<%= sub.githubLogin %>" readonly></div>
+    <div class="ro"><label>GitLab</label><input value="<%= sub.gitlabUsername %>" readonly></div>
+    <div class="ro"><label>Telegram</label><input value="<%= sub.telegramUsername ? '@' + sub.telegramUsername : sub.telegramId %>" readonly></div>
+    <div class="ro"><label>狀態</label><input value="<%= sub.status === 'pending' ? '待審核' : sub.status === 'approved' ? '已核准' : '已退回' %>" readonly></div>
+  </section>
+
+  <h2>你填寫的內容</h2>
+  <% if (!allFields.length) { %>
+    <p class="muted">（尚無填答欄位）</p>
+  <% } else { %>
+    <table class="kv">
+      <% allFields.forEach(function (f) { var v = sub.answers[f.key]; %>
+        <tr>
+          <th><%= f.label %><% if (f.workerEditable) { %> <span class="badge ok">可修改</span><% } %></th>
+          <td>
+            <% if (f.type === 'file') { %>
+              <% if (v && v.link) { %><a href="<%= v.link %>" target="_blank" rel="noopener"><%= v.name %></a>
+              <% } else if (v && v.name) { %><%= v.name %><% } else { %>—<% } %>
+            <% } else if (Array.isArray(v)) { %><%= v.length ? v.join(', ') : '—' %>
+            <% } else { %><%= (v === undefined || v === null || v === '') ? '—' : v %><% } %>
+          </td>
+        </tr>
+      <% }); %>
+    </table>
+  <% } %>
+
+  <% if (fields.length) { %>
+    <h2>修改開放編輯的欄位</h2>
+    <form method="post" action="/edit/<%= token %>" enctype="multipart/form-data" novalidate>
+      <% fields.forEach(function (f) { %>
+        <%- include('partials/field', { f: f, values: values, errors: errors }) %>
+      <% }); %>
+      <div class="section-nav">
+        <button type="submit" class="btn primary">儲存修改</button>
+      </div>
+    </form>
+  <% } else { %>
+    <div class="notice"><p>目前沒有開放修改的欄位。若需協助請聯絡行政組。</p></div>
+  <% } %>
+</div>
+<%- include('partials/footer') %>
