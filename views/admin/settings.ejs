@@ -1,0 +1,51 @@
+<%- include('../partials/header', { title: '系統設定', flash: flash }) %>
+<div class="card">
+  <div class="admin-top">
+    <h1>系統設定</h1>
+    <a href="/admin">← 返回後台</a>
+  </div>
+  <p class="muted">所有憑證存在伺服器的資料庫，不需要改 <code>.env</code>。祕密欄位留空代表「不變更」。改完 Base URL / OAuth 後，記得到各平台把 callback 設為 <code>&lt;Base URL&gt;/auth/&lt;provider&gt;/callback</code>。</p>
+  <p class="muted small">💡 本頁改完欄位會<strong>自動儲存</strong>（祕密欄位留空＝沿用原值，不會被清空）；按「測試」也會先存再測。</p>
+
+  <form method="post" action="/admin/settings">
+    <% groups.forEach(function (g) { %>
+      <h3><%= g.title %></h3>
+      <% if (g.callbackProvider) { %>
+        <p class="hint-box">在該平台的 OAuth 應用程式設定，把 <strong>Authorization callback / Redirect URL</strong> 填為：<br><code class="copyable"><%= callbacks[g.callbackProvider] %></code></p>
+      <% } %>
+      <% if (g.telegramNote) { %>
+        <p class="hint-box">在 <code>@BotFather</code> 用 <code>/setdomain</code> 把網域設為：<code class="copyable"><%= telegramDomain %></code></p>
+      <% } %>
+      <% g.fields.forEach(function (f) { %>
+        <div class="field">
+          <label><%= f.label %>
+            <% if (f.secret) { %><span class="badge <%= isSet[f.key] ? 'ok' : 'warn' %>"><%= isSet[f.key] ? '已設定' : '未設定' %></span><% } %>
+          </label>
+          <% if (f.hint) { %><p class="help"><%= f.hint %></p><% } %>
+          <% if (f.textarea) { %>
+            <textarea name="<%= f.key %>" rows="6" placeholder="<%= f.secret && isSet[f.key] ? '已設定（留空不變更）' : '' %>"><%= values[f.key] %></textarea>
+          <% } else if (f.secret) { %>
+            <input type="password" name="<%= f.key %>" value="" placeholder="<%= isSet[f.key] ? '已設定（留空不變更）' : '未設定' %>">
+          <% } else { %>
+            <input type="text" name="<%= f.key %>" value="<%= values[f.key] %>">
+          <% } %>
+        </div>
+      <% }); %>
+      <% if (g.tests || g.emailTest) { %>
+        <div class="test-bar">
+          <% (g.tests || []).forEach(function (t) { %>
+            <button type="button" class="btn small js-test" data-test="<%= t.target %>"><%= t.label %></button>
+          <% }); %>
+          <% if (g.emailTest) { %>
+            <input type="email" class="js-test-email-to" placeholder="收件信箱">
+            <button type="button" class="btn small js-test-email">寄測試信</button>
+          <% } %>
+          <span class="test-result muted small"></span>
+        </div>
+      <% } %>
+    <% }); %>
+    <button class="btn primary" type="submit">儲存設定</button>
+    <span id="autosave-status" class="small muted"></span>
+  </form>
+</div>
+<%- include('../partials/footer') %>

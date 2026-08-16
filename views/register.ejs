@@ -1,0 +1,53 @@
+<%- include('partials/header', { title: 'SITCON 2027 工人登錄表單', flash: flash }) %>
+<div class="card">
+  <h1>SITCON 2027 工人登錄表單</h1>
+  <p class="muted">像 Google 表單一樣填寫即可，帳號欄位已自動帶入、無法修改。<br>如有問題請找行政組 Yuan（TG: <a href="https://t.me/yuan_tw_1111" target="_blank" rel="noopener">@yuan_tw_1111</a>）</p>
+  <p class="muted small">📝 系統會自動保留你已填的內容（檔案除外），重整、關掉、甚至換裝置登入同一帳號都會還原。</p>
+
+  <section class="identity">
+    <h3>已驗證帳號</h3>
+    <div class="ro"><label>Email</label><input value="<%= identity.googleEmail %>" readonly></div>
+    <div class="ro"><label>GitHub</label><input value="<%= identity.githubLogin %>" readonly></div>
+    <div class="ro"><label>GitLab</label><input value="<%= identity.gitlabUsername %>" readonly></div>
+    <div class="ro"><label>Telegram</label><input value="<%= identity.telegramUsername ? '@' + identity.telegramUsername : identity.telegramId %>" readonly></div>
+  </section>
+
+  <form method="post" action="/register" enctype="multipart/form-data" novalidate data-draft-key="<%= identity.googleEmail %>" data-draft-ts="<%= typeof draftTs !== 'undefined' ? draftTs : 0 %>">
+    <% grouped.forEach(function (g, i) { %>
+      <div class="form-section" data-section-id="<%= g.section.id %>" data-index="<%= i %>" <%= i === 0 ? '' : 'hidden' %>>
+        <% if (g.section.title) { %><h2 class="section-title"><%= g.section.title %></h2><% } %>
+        <% if (g.section.description) { %><p class="muted section-desc"><%= g.section.description %></p><% } %>
+
+        <% g.fields.forEach(function (f) { %>
+          <%- include('partials/field', { f: f, values: values, errors: errors }) %>
+        <% }); %>
+
+        <div class="section-nav">
+          <button type="button" class="btn js-prev" style="display:none">← 上一步</button>
+          <button type="button" class="btn primary js-next">下一步 →</button>
+          <button type="button" class="btn primary js-review" style="display:none">檢視填寫內容 →</button>
+        </div>
+      </div>
+    <% }); %>
+
+    <% var hasEditable = grouped.some(function (g) { return g.fields.some(function (f) { return f.workerEditable; }); }); %>
+    <div class="summary-step" hidden>
+      <h2 class="section-title">確認你的填寫內容</h2>
+      <p class="muted">送出前請再檢查一次；若有需要可返回修改。</p>
+      <div class="summary-body"></div>
+      <div class="notice">
+        <p>📧 送出後會寄一封確認信到 <strong><%= identity.googleEmail %></strong>（沒收到請檢查垃圾信匣）。</p>
+        <% if (hasEditable) { %>
+          <p>✏️ 送出後，<strong>部分欄位</strong>（如室友、飲食等偏好）可透過確認信中的<strong>專屬連結</strong>自行修改；其餘資料如需更動請聯絡行政組。</p>
+        <% } else { %>
+          <p>送出後如需修改資料，請聯絡行政組協助。</p>
+        <% } %>
+      </div>
+      <div class="section-nav">
+        <button type="button" class="btn js-summary-back">← 返回修改</button>
+        <button type="submit" class="btn primary js-final-submit">確認送出登錄</button>
+      </div>
+    </div>
+  </form>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,19 @@
+<%- include('../partials/header', { title: '行政組登入', flash: flash }) %>
+<div class="card narrow">
+  <h1>行政組登入</h1>
+  <% if (googleReady) { %>
+    <p>請使用行政組 Google 帳號登入（需在 allowlist 內）。</p>
+    <a class="btn primary" href="/auth/google?mode=admin">使用 Google 登入</a>
+  <% } else { %>
+    <p class="badge warn">Google 登入尚未設定，請先用下方設定金鑰登入並完成系統設定。</p>
+  <% } %>
+
+  <% if (setupAllowed) { %>
+    <form method="post" action="/admin/setup-login" class="stack" style="margin-top:20px">
+      <label class="muted small">或用設定金鑰登入（首次設定，金鑰見伺服器啟動 log）</label>
+      <input type="password" name="key" placeholder="setup key">
+      <button class="btn" type="submit">以設定金鑰登入</button>
+    </form>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

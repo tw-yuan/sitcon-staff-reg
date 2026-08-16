@@ -1,0 +1,15 @@
+[Unit]
+Description=Restrict sitcon-reg published port to the reverse proxy only
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# 部署路徑不同請改這行；也可用 Environment 覆蓋 PROXY_IP / PORT
+Environment=PROXY_IP=23.146.248.8
+Environment=PORT=9000
+ExecStart=/root/sitcon-staff-reg/scripts/firewall.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

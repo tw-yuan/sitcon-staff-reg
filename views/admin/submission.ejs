@@ -1,0 +1,123 @@
+<%- include('../partials/header', { title: '登錄詳情', flash: flash }) %>
+<div class="card">
+  <div class="admin-top">
+    <h1>登錄詳情 #<%= sub.id %></h1>
+    <a href="/admin">← 返回後台</a>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h3>帳號</h3>
+      <table class="kv">
+        <tr><th>Email</th><td><%= sub.googleEmail %></td></tr>
+        <tr><th>GitHub</th><td><%= sub.githubLogin %> <span class="muted small">(id: <%= sub.githubId %>)</span></td></tr>
+        <tr><th>GitLab</th><td><%= sub.gitlabUsername %> <span class="muted small">(id: <%= sub.gitlabId %>)</span></td></tr>
+        <tr><th>Telegram</th><td><%= sub.telegramUsername ? '@' + sub.telegramUsername : '' %> <span class="muted small">(id: <%= sub.telegramId %>)</span></td></tr>
+        <tr><th>狀態</th><td><span class="status <%= sub.status %>"><%= statusLabels[sub.status] %></span></td></tr>
+        <tr><th>工作組</th><td><%= workgroupName || '（未指定）' %></td></tr>
+        <% if (sub.reviewedBy) { %><tr><th>審核</th><td><%= sub.reviewedBy %> · <%= sub.reviewedAt %></td></tr><% } %>
+        <% if (sub.rejectReason) { %><tr><th>退回原因</th><td><%= sub.rejectReason %></td></tr><% } %>
+      </table>
+    </div>
+    <div>
+      <h3>審核</h3>
+      <form method="post" action="/admin/submissions/<%= sub.id %>/approve" class="stack">
+        <label>指定工作組（決定要開通哪些權限）</label>
+        <select name="workgroup_id">
+          <option value="" <%= presetWorkgroupId == null ? 'selected' : '' %>>不指定工作組</option>
+          <% workgroups.forEach(function (w) { %><option value="<%= w.id %>" <%= presetWorkgroupId === w.id ? 'selected' : '' %>><%= w.name %></option><% }); %>
+        </select>
+        <% if (sub.workgroupId == null && presetWorkgroupId != null) { %><span class="muted small">已帶入預設工作組，需要的話用上方下拉改選</span><% } %>
+        <label class="chk"><input type="checkbox" name="provision" checked> 核准後同時開通權限（取消勾選＝只通過審核、不開通）</label>
+        <button class="btn primary" type="submit">核准</button>
+      </form>
+      <form method="post" action="/admin/submissions/<%= sub.id %>/reject" class="stack">
+        <input type="text" name="reason" placeholder="退回原因（選填）">
+        <button class="btn danger" type="submit">退回</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="test-bar">
+    <span class="muted small">Google Sheet：<%= sub.sheetRow ? '第 ' + sub.sheetRow + ' 列' : '本地尚無列號' %></span>
+    <form method="post" action="/admin/submissions/<%= sub.id %>/sheet-upsert">
+      <button class="btn small" type="submit">Upsert 到 Google Sheet</button>
+    </form>
+    <span class="muted small">（以 Email 比對：有就更新該列、沒有才新增）</span>
+  </div>
+
+  <h3>填寫內容</h3>
+  <form method="post" action="/admin/submissions/<%= sub.id %>/answers">
+    <table class="kv">
+      <% fields.forEach(function (f) { var v = sub.answers[f.key]; %>
+        <tr>
+          <th><%= f.label %></th>
+          <td>
+            <% if (f.type === 'file') { %>
+              <% if (v && v.link) { %><a href="<%= v.link %>" target="_blank"><%= v.name %></a>
+              <% } else if (v && v.name) { %><%= v.name %><% } else { %>—<% } %>
+            <% } else if (f.type === 'multi_select') { %>
+              <%= Array.isArray(v) ? v.join(', ') : '' %>
+            <% } else { %>
+              <input type="text" name="<%= f.key %>" value="<%= v !== undefined ? v : '' %>" class="wide">
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+    </table>
+    <button class="btn small" type="submit">儲存修改</button>
+  </form>
+
+  <h3>權限開通狀態</h3>
+  <p class="muted small">勾選要撤回的權限,按「撤銷選取的權限」;或直接「全部撤回」。撤銷只移除權限,<strong>不會刪除工人的登錄資料</strong>。</p>
+  <!-- 以 form= 關聯 checkbox,避免與列內的 retry 表單巢狀 -->
+  <form id="revsel" method="post" action="/admin/submissions/<%= sub.id %>/revoke-selected"></form>
+  <div class="table-scroll">
+  <table class="tbl">
+    <thead><tr><th></th><th>平台</th><th>目標</th><th>角色</th><th>狀態</th><th>訊息</th><th></th></tr></thead>
+    <tbody>
+      <% tasks.forEach(function (t) { %>
+        <tr>
+          <td><% if (t.status === 'success' || t.status === 'invited') { %><input type="checkbox" name="task_ids" value="<%= t.id %>" form="revsel"><% } %></td>
+          <td><%= platformLabels[t.platform] %></td>
+          <td><% if (t.platform === 'note') { %><%= t.target %><% } else { %><code><%= t.target %></code><% } %></td>
+          <td><%= t.platform === 'note' ? '—' : t.role %></td>
+          <td><span class="status <%= t.status %>"><%= provStatusLabels[t.status] %></span></td>
+          <td class="muted small"><%= t.detail %></td>
+          <td>
+            <% if (t.status === 'revoked') { %>
+              <form method="post" action="/admin/submissions/tasks/<%= t.id %>/retry"><button class="btn small" type="submit">重新開通</button></form>
+            <% } else if (t.status === 'failed' || t.status === 'pending') { %>
+              <form method="post" action="/admin/submissions/tasks/<%= t.id %>/retry"><button class="btn small" type="submit">重試</button></form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!tasks.length) { %><tr><td colspan="7" class="muted">尚未核准或無授權項目</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+  <% if (tasks.length) { %>
+    <div class="test-bar">
+      <button class="btn small danger" type="submit" form="revsel" onclick="return confirm('撤銷勾選的權限?')">撤銷選取的權限</button>
+      <form method="post" action="/admin/submissions/<%= sub.id %>/revoke-all" onsubmit="return confirm('撤銷此工人所有已開通的權限?')"><button class="btn small danger" type="submit">全部撤回</button></form>
+      <form method="post" action="/admin/submissions/<%= sub.id %>/reprovision"><button class="btn small" type="submit">重跑全部未完成</button></form>
+    </div>
+  <% } %>
+
+  <h3>操作紀錄</h3>
+  <ul class="audit">
+    <% audit.forEach(function (a) { %><li><span class="muted small"><%= a.createdAt %></span> — <%= a.actor %> — <%= a.action %></li><% }); %>
+    <% if (!audit.length) { %><li class="muted">尚無紀錄</li><% } %>
+  </ul>
+
+  <h3>危險操作</h3>
+  <div class="notice danger">
+    <p class="small">刪除後本地資料庫將<strong>不再保留這筆登錄</strong>，該 Email 可重新登錄。此動作<strong>無法復原</strong>。</p>
+    <p class="small">⚠️ 注意：<strong>Google Sheet 的資料列不會自動移除</strong>；若此工人已開通權限，建議先於上方「全部撤回」再刪除。</p>
+    <form method="post" action="/admin/submissions/<%= sub.id %>/delete" onsubmit="return confirm('確定要永久刪除這筆登錄紀錄嗎？此動作無法復原。')">
+      <button class="btn danger" type="submit">刪除此登錄紀錄</button>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>
