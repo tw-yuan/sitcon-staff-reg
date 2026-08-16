@@ -4,6 +4,8 @@ import { Submission } from '../models/submissions';
 import { nicknameOf } from './nickname';
 
 const DEFAULT_TEMPLATE = '[SITCON 2027 工人登錄]\n{{telegram}} {{nickname}} 已完成登錄';
+const DEFAULT_EDIT_TEMPLATE =
+  '[SITCON 2027 工人登錄]\n{{telegram}} {{nickname}} 更新了以下項目：\n{{fields}}';
 
 /** 代入變數：同時支援 {{var}} 與 {$var} 兩種寫法。 */
 function render(tpl: string, vars: Record<string, string>): string {
@@ -39,15 +41,28 @@ export function notifyChatId(): string {
   return (getSetting('telegram_notify_chat_id') || '').trim();
 }
 
-/** 依模板與答案組出通知訊息（不含發送，方便測試）。 */
-export function buildNotifyText(sub: Submission): string {
-  const tpl = getSetting('telegram_notify_template') || DEFAULT_TEMPLATE;
-  return render(tpl, {
+function baseVars(sub: Submission): Record<string, string> {
+  return {
     email: sub.googleEmail,
     nickname: nicknameOf(sub),
     telegram_username: sub.telegramUsername,
     // Telegram 使用者可以不設 username，此時退回 email 避免訊息只剩「@ 暱稱」
     telegram: sub.telegramUsername ? `@${sub.telegramUsername}` : sub.googleEmail,
+  };
+}
+
+/** 依模板與答案組出通知訊息（不含發送，方便測試）。 */
+export function buildNotifyText(sub: Submission): string {
+  const tpl = getSetting('telegram_notify_template') || DEFAULT_TEMPLATE;
+  return render(tpl, baseVars(sub));
+}
+
+/** 工人更新資料的通知訊息；{{fields}} 為更新欄位清單（每行「- 標題」）。 */
+export function buildEditNotifyText(sub: Submission, changedLabels: string[]): string {
+  const tpl = getSetting('telegram_edit_notify_template') || DEFAULT_EDIT_TEMPLATE;
+  return render(tpl, {
+    ...baseVars(sub),
+    fields: changedLabels.map((l) => `- ${l}`).join('\n'),
   });
 }
 
@@ -56,5 +71,14 @@ export async function notifyNewSubmission(sub: Submission): Promise<void> {
   const chatId = notifyChatId();
   if (!chatId || !config.telegram.botToken) return;
   const r = await sendTelegramMessage(chatId, buildNotifyText(sub));
+  if (!r.ok) console.error('[telegram-notify] 發送失敗：', r.message);
+}
+
+/** 工人透過修改連結更新資料時，發通知到指定群組。沒有實際變更或未設定時安靜略過。 */
+export async function notifyAnswersUpdated(sub: Submission, changedLabels: string[]): Promise<void> {
+  if (changedLabels.length === 0) return;
+  const chatId = notifyChatId();
+  if (!chatId || !config.telegram.botToken) return;
+  const r = await sendTelegramMessage(chatId, buildEditNotifyText(sub, changedLabels));
   if (!r.ok) console.error('[telegram-notify] 發送失敗：', r.message);
 }

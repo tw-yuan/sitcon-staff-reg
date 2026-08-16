@@ -21,7 +21,7 @@ import { computeVisitedSections } from '../validation/branching';
 import { uploadBuffer } from '../services/drive';
 import { appendSubmissionRow, upsertSubmissionRow } from '../services/sheets';
 import { sendReceivedMail } from '../services/mailer';
-import { notifyNewSubmission } from '../services/telegramNotify';
+import { notifyNewSubmission, notifyAnswersUpdated } from '../services/telegramNotify';
 import { logAudit } from '../models/audit';
 
 export const registerRouter = Router();
@@ -388,6 +388,10 @@ registerRouter.post('/edit/:token', upload.any(), async (req, res, next) => {
       }
     }
 
+    // 比對新舊答案，找出實際有變動的欄位（含分支改變被清除的答案），供 Telegram 通知列出
+    const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+    const changedFields = editableAll.filter((f) => !same(sub.answers[f.key], answers[f.key]));
+
     updateAnswers(sub.id, answers);
     logAudit('worker', 'answers_edited_by_worker', sub.id, { keys: editable.map((f) => f.key) });
 
@@ -401,6 +405,8 @@ registerRouter.post('/edit/:token', upload.any(), async (req, res, next) => {
     }
 
     const fresh = getSubmission(sub.id)!;
+    void notifyAnswersUpdated(fresh, changedFields.map((f) => f.label)); // Telegram 群組通知（無變更或未設定則安靜略過）
+
     renderEdit(res, fresh, editable, fresh.answers, {}, { saved: true });
   } catch (err) {
     next(err);

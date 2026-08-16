@@ -74,7 +74,7 @@ export const SETTINGS_GROUPS: Group[] = [
     telegramNote: true,
   },
   {
-    title: 'Telegram 通知（有人完成登錄時發到群組）',
+    title: 'Telegram 通知（有人完成登錄／更新資料時發到群組）',
     fields: [
       {
         key: 'telegram_notify_chat_id',
@@ -92,6 +92,13 @@ export const SETTINGS_GROUPS: Group[] = [
         textarea: true,
         default: '[SITCON 2027 工人登錄]\n{{telegram}} {{nickname}} 已完成登錄',
         hint: '可用變數：{{telegram}}（@username，沒設 username 時退回 email）、{{telegram_username}}、{{email}}、{{nickname}}（也支援 {$var} 寫法）。留空＝用預設。',
+      },
+      {
+        key: 'telegram_edit_notify_template',
+        label: '更新資料通知模板',
+        textarea: true,
+        default: '[SITCON 2027 工人登錄]\n{{telegram}} {{nickname}} 更新了以下項目：\n{{fields}}',
+        hint: '工人透過修改連結更新資料且內容有變動時發送。除上方變數外，另可用 {{fields}}（更新的欄位標題清單，每行「- 標題」）。留空＝用預設。',
       },
     ],
     tests: [{ target: 'telegram_notify', label: '發送測試通知到群組' }],
