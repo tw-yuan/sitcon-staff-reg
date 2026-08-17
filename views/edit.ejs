@@ -12,6 +12,7 @@
     <div class="ro"><label>GitHub</label><input value="<%= sub.githubLogin %>" readonly></div>
     <div class="ro"><label>GitLab</label><input value="<%= sub.gitlabUsername %>" readonly></div>
     <div class="ro"><label>Telegram</label><input value="<%= sub.telegramUsername ? '@' + sub.telegramUsername : sub.telegramId %>" readonly></div>
+    <% if (!sub.telegramUsername) { %><%- include('partials/tg-username-hint') %><% } %>
     <div class="ro"><label>狀態</label><input value="<%= sub.status === 'pending' ? '待審核' : sub.status === 'approved' ? '已核准' : '已退回' %>" readonly></div>
   </section>
 

@@ -21,6 +21,7 @@
       <span class="provider-name">Telegram</span>
       <% if (telegram.linked) { %>
         <span class="badge ok">✓ <%= telegram.value %></span>
+        <% if (!telegram.username) { %><%- include('partials/tg-username-hint') %><% } %>
       <% } else if (!telegram.configured) { %>
         <span class="badge warn">尚未設定</span>
       <% } else { %>

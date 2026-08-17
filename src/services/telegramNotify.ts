@@ -57,13 +57,23 @@ export function buildNotifyText(sub: Submission): string {
   return render(tpl, baseVars(sub));
 }
 
-/** 工人更新資料的通知訊息；{{fields}} 為更新欄位清單（每行「- 標題」）。 */
-export function buildEditNotifyText(sub: Submission, changedLabels: string[]): string {
+/**
+ * 工人更新資料的通知訊息；{{fields}} 為更新欄位清單（每行「- 標題」）。
+ * editedBy＝後台管理員的 email（工人自行修改時不帶）。模板若沒用 {{by}}，自動在最後補「由 <email> 修改」。
+ */
+export function buildEditNotifyText(
+  sub: Submission,
+  changedLabels: string[],
+  editedBy?: string,
+): string {
   const tpl = getSetting('telegram_edit_notify_template') || DEFAULT_EDIT_TEMPLATE;
-  return render(tpl, {
+  let text = render(tpl, {
     ...baseVars(sub),
     fields: changedLabels.map((l) => `- ${l}`).join('\n'),
+    by: editedBy || '',
   });
+  if (editedBy && !/\{\{\s*by\s*\}\}|\{\$by\}/.test(tpl)) text += `\n由 ${editedBy} 修改`;
+  return text;
 }
 
 /** 有人完成登錄時，發通知到指定群組。未設定 chat_id / token 時安靜略過，不影響主流程。 */
@@ -74,11 +84,15 @@ export async function notifyNewSubmission(sub: Submission): Promise<void> {
   if (!r.ok) console.error('[telegram-notify] 發送失敗：', r.message);
 }
 
-/** 工人透過修改連結更新資料時，發通知到指定群組。沒有實際變更或未設定時安靜略過。 */
-export async function notifyAnswersUpdated(sub: Submission, changedLabels: string[]): Promise<void> {
+/** 資料被更新時發通知到指定群組（editedBy＝後台管理員 email）。沒有實際變更或未設定時安靜略過。 */
+export async function notifyAnswersUpdated(
+  sub: Submission,
+  changedLabels: string[],
+  editedBy?: string,
+): Promise<void> {
   if (changedLabels.length === 0) return;
   const chatId = notifyChatId();
   if (!chatId || !config.telegram.botToken) return;
-  const r = await sendTelegramMessage(chatId, buildEditNotifyText(sub, changedLabels));
+  const r = await sendTelegramMessage(chatId, buildEditNotifyText(sub, changedLabels, editedBy));
   if (!r.ok) console.error('[telegram-notify] 發送失敗：', r.message);
 }

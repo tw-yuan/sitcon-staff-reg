@@ -10,6 +10,7 @@
     <div class="ro"><label>GitHub</label><input value="<%= identity.githubLogin %>" readonly></div>
     <div class="ro"><label>GitLab</label><input value="<%= identity.gitlabUsername %>" readonly></div>
     <div class="ro"><label>Telegram</label><input value="<%= identity.telegramUsername ? '@' + identity.telegramUsername : identity.telegramId %>" readonly></div>
+    <% if (!identity.telegramUsername) { %><%- include('partials/tg-username-hint') %><% } %>
   </section>
 
   <form method="post" action="/register" enctype="multipart/form-data" novalidate data-draft-key="<%= identity.googleEmail %>" data-draft-ts="<%= typeof draftTs !== 'undefined' ? draftTs : 0 %>">

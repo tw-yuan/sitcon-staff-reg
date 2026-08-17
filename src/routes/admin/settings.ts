@@ -98,7 +98,7 @@ export const SETTINGS_GROUPS: Group[] = [
         label: '更新資料通知模板',
         textarea: true,
         default: '[SITCON 2027 工人登錄]\n{{telegram}} {{nickname}} 更新了以下項目：\n{{fields}}',
-        hint: '工人透過修改連結更新資料且內容有變動時發送。除上方變數外，另可用 {{fields}}（更新的欄位標題清單，每行「- 標題」）。留空＝用預設。',
+        hint: '工人透過修改連結或管理員從後台更新資料且內容有變動時發送。除上方變數外，另可用 {{fields}}（更新的欄位標題清單，每行「- 標題」）。後台修改時自動在最後補「由 <管理員 email> 修改」；想自訂位置可在模板放 {{by}}。留空＝用預設。',
       },
     ],
     tests: [{ target: 'telegram_notify', label: '發送測試通知到群組' }],

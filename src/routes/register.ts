@@ -88,6 +88,7 @@ function telegramStatus(req: import('express').Request) {
     // bot_id = bot token 冒號前的數字，非機密（登入彈窗需要），供自訂按鈕呼叫 Telegram.Login.auth。
     botId: config.telegram.botToken.split(':')[0] || '',
     value: tg ? (tg.username ? `${tg.username} (${tg.id})` : `(id: ${tg.id})`) : '',
+    username: tg ? tg.username || '' : '',
   };
 }
 

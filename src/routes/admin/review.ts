@@ -257,7 +257,11 @@ reviewRouter.post('/:id/answers', async (req, res, next) => {
     updateAnswers(id, answers);
     await syncSheet(id);
     logAudit(req.session.admin!.email, 'answers_edited', id, {});
-    void notifyAnswersUpdated(getSubmission(id)!, changedFields.map((f) => f.label));
+    void notifyAnswersUpdated(
+      getSubmission(id)!,
+      changedFields.map((f) => f.label),
+      req.session.admin!.email, // 通知標示「由 <email> 修改」
+    );
     req.session.flash = '已更新工人資料';
     res.redirect(`/admin/submissions/${id}`);
   } catch (err) {
