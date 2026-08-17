@@ -28,6 +28,7 @@ import {
 } from '../../services/provisioning';
 import { updateSubmissionRow, upsertSubmissionRow } from '../../services/sheets';
 import { sendApprovedMail, sendRejectedMail } from '../../services/mailer';
+import { notifyAnswersUpdated } from '../../services/telegramNotify';
 
 export const reviewRouter = Router();
 
@@ -240,8 +241,9 @@ reviewRouter.post('/:id/answers', async (req, res, next) => {
       res.status(404).render('error', { title: '找不到', message: '查無此登錄' });
       return;
     }
+    const fields = listFields();
     const answers = { ...sub.answers };
-    for (const f of listFields()) {
+    for (const f of fields) {
       if (f.type === 'file') continue;
       if (f.type === 'multi_select') {
         if (req.body[f.key] !== undefined) answers[f.key] = asArray(req.body[f.key]);
@@ -249,9 +251,13 @@ reviewRouter.post('/:id/answers', async (req, res, next) => {
         answers[f.key] = String(req.body[f.key]);
       }
     }
+    // 與工人自行修改相同：比對新舊答案找出實際變動的欄位，發 Telegram 通知
+    const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+    const changedFields = fields.filter((f) => !same(sub.answers[f.key], answers[f.key]));
     updateAnswers(id, answers);
     await syncSheet(id);
     logAudit(req.session.admin!.email, 'answers_edited', id, {});
+    void notifyAnswersUpdated(getSubmission(id)!, changedFields.map((f) => f.label));
     req.session.flash = '已更新工人資料';
     res.redirect(`/admin/submissions/${id}`);
   } catch (err) {
