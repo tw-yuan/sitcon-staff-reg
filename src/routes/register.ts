@@ -92,6 +92,12 @@ function telegramStatus(req: import('express').Request) {
   };
 }
 
+// Telegram username 為必要條件：沒設 username 不能開始填表（設定後點「重新登入」才會帶入）。
+function tgUsernameMissing(req: import('express').Request): boolean {
+  const tg = req.session.linked && req.session.linked.telegram;
+  return !!tg && !tg.username;
+}
+
 // 已登錄過者看到的「登錄完畢」畫面：帶入修改連結（若有開放修改的欄位）。
 function renderAlready(
   res: import('express').Response,
@@ -117,7 +123,7 @@ registerRouter.get('/', (req, res) => {
       return;
     }
   }
-  if (!allLinked(req)) {
+  if (!allLinked(req) || tgUsernameMissing(req)) {
     res.render('login', { providers: providerStatus(req), telegram: telegramStatus(req), flash });
     return;
   }
@@ -164,6 +170,12 @@ registerRouter.post('/register', upload.any(), async (req, res, next) => {
     fixMultipartUtf8Keys(req); // 修正 multipart 中文欄位名亂碼（見函式說明）
     const identity = sessionIdentity(req);
     if (!identity) {
+      res.redirect('/');
+      return;
+    }
+    if (!identity.telegramUsername) {
+      // 伺服器權威：沒設 username 一律擋下（登入頁會顯示教學與「重新登入」）
+      req.session.flash = '請先設定 Telegram username，再點 Telegram 重新登入';
       res.redirect('/');
       return;
     }

@@ -1,2 +1,6 @@
-<%# Telegram 尚未設定 username 時的教學提示（login / register / edit 共用） %>
-<p class="muted small">⚠️ 你的 Telegram 還沒設定 username，之後群組通知與聯絡都會不方便。可以參考<a href="https://digitalyoming.com/telegram-id-setting/" target="_blank" rel="noopener">這篇教學</a>設定一個。</p>
+<%# Telegram 尚未設定 username 的提示。blocking=true（登入頁）：擋下一步；否則（edit 頁）僅提醒。 %>
+<% if (typeof blocking !== 'undefined' && blocking) { %>
+<p class="muted small tg-hint">⚠️ 你的 Telegram 還沒設定 username，<strong>設定完成才能繼續登錄</strong>。請參考<a href="https://digitalyoming.com/telegram-id-setting/" target="_blank" rel="noopener">這篇教學</a>設定，回來點「重新登入」即可帶入。</p>
+<% } else { %>
+<p class="muted small tg-hint">⚠️ 你的 Telegram 還沒設定 username，通知與聯絡會不方便。可以參考<a href="https://digitalyoming.com/telegram-id-setting/" target="_blank" rel="noopener">這篇教學</a>設定一個。</p>
+<% } %>

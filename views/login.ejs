@@ -17,22 +17,23 @@
         <% } %>
       </li>
     <% }); %>
-    <li class="provider <%= telegram.linked ? 'done' : '' %>">
+    <li class="provider <%= telegram.linked && telegram.username ? 'done' : '' %>">
       <span class="provider-name">Telegram</span>
-      <% if (telegram.linked) { %>
+      <% if (telegram.linked && telegram.username) { %>
         <span class="badge ok">✓ <%= telegram.value %></span>
-        <% if (!telegram.username) { %><%- include('partials/tg-username-hint') %><% } %>
       <% } else if (!telegram.configured) { %>
         <span class="badge warn">尚未設定</span>
       <% } else { %>
+        <% if (telegram.linked) { %><span class="badge warn">尚未設定 username</span><% } %>
         <button type="button" class="btn tg js-tg-login" data-bot-id="<%= telegram.botId %>">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M21.94 4.39 18.9 19.1c-.23 1.02-.84 1.27-1.7.79l-4.7-3.46-2.27 2.18c-.25.25-.46.46-.94.46l.33-4.77 8.68-7.84c.38-.34-.08-.53-.59-.19L6.98 13.4l-4.63-1.45c-1.01-.32-1.03-1.01.21-1.5l18.1-6.98c.84-.31 1.58.2 1.28 1.42Z"/></svg>
-          登入
+          <%= telegram.linked ? '重新登入' : '登入' %>
         </button>
         <script async src="https://telegram.org/js/telegram-widget.js?22"></script>
+        <% if (telegram.linked) { %><%- include('partials/tg-username-hint', { blocking: true }) %><% } %>
       <% } %>
     </li>
   </ul>
-  <p class="muted">四個帳號都連結完成後即可開始填寫表單。</p>
+  <p class="muted">四個帳號都連結完成（Telegram 需已設定 username）後即可開始填寫表單。</p>
 </div>
 <%- include('partials/footer') %>

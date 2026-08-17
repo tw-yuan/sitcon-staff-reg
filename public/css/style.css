@@ -312,6 +312,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--primary); }
 .provider-list { list-style: none; padding: 0; margin: 20px 0; }
 .provider {
   display: flex;
+  flex-wrap: wrap; /* 讓 .tg-hint 提示能換行占滿整列 */
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -321,6 +322,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--primary); }
   margin-bottom: 12px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+.provider .tg-hint { flex-basis: 100%; margin: 0; }
 .provider:hover { box-shadow: var(--shadow-sm); }
 .provider.done { background: var(--ok-weak); border-color: #b7e4c7; }
 .provider-name { font-weight: 600; }
