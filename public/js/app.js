@@ -572,6 +572,62 @@ function debounce(fn, ms) {
   });
 })();
 
+// (5) 修改頁 /edit/:token：Discord 式「未儲存變更」浮動列。
+//     有欄位變動才從頁面底部滑出；「還原」把表單恢復成伺服器渲染的原值。
+(function initUnsavedBar() {
+  var form = document.querySelector('form[action^="/edit/"]');
+  var bar = document.getElementById('savebar');
+  if (!form || !bar) return;
+  var fallback = document.getElementById('edit-save-fallback');
+  if (fallback) fallback.hidden = true; // 無 JS 備援鈕；JS 可用時改走浮動列
+
+  // 序列化表單目前狀態；檔案欄位以檔名+大小代表內容。
+  // 控制項順序固定（DOM 順序），直接串接比對即可。
+  function serialize() {
+    var parts = [];
+    new FormData(form).forEach(function (val, key) {
+      parts.push(key + '=' + (val instanceof File ? '\u0000file:' + val.name + ':' + val.size : String(val)));
+    });
+    return parts.join('\u0001');
+  }
+
+  var baseline = serialize();
+  var submitting = false;
+
+  function refresh() {
+    var dirty = !submitting && serialize() !== baseline;
+    bar.hidden = !dirty;
+    document.body.classList.toggle('has-savebar', dirty);
+  }
+
+  form.addEventListener('input', refresh);
+  form.addEventListener('change', refresh);
+  // 送出後把儲存鈕換成轉圈載入狀態，並鎖住兩顆按鈕避免重複送出
+  form.addEventListener('submit', function () {
+    submitting = true;
+    var save = bar.querySelector('button[type=submit]');
+    if (save) {
+      save.disabled = true;
+      save.innerHTML = '<span class="spinner"></span>儲存中…';
+    }
+    var resetBtn = document.getElementById('savebar-reset');
+    if (resetBtn) resetBtn.disabled = true;
+  });
+
+  var reset = document.getElementById('savebar-reset');
+  if (reset) reset.addEventListener('click', function () {
+    form.reset(); // 回到伺服器渲染的初值（含「其他」的勾選與文字）
+    refresh();
+  });
+
+  // 有未儲存變更時，關閉／重整頁面前提醒
+  window.addEventListener('beforeunload', function (e) {
+    if (submitting || serialize() === baseline) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+})();
+
 // ---------- App 內建瀏覽器（Telegram / LINE 等）偵測與逃脫 ----------
 // 網站無法強制 Telegram 改用外部瀏覽器；只能偵測後引導使用者跳出，
 // 否則 Google OAuth 會因 disallowed_useragent 被擋。

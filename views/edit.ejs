@@ -42,8 +42,17 @@
       <% fields.forEach(function (f) { %>
         <%- include('partials/field', { f: f, values: values, errors: errors }) %>
       <% }); %>
-      <div class="section-nav">
+      <%# 無 JS 時的備援儲存鈕；有 JS 時隱藏，改用下方浮動儲存列 %>
+      <div class="section-nav" id="edit-save-fallback">
         <button type="submit" class="btn primary">儲存修改</button>
+      </div>
+      <%# Discord 式未儲存提示列：有欄位變動時由 app.js 顯示 %>
+      <div class="savebar" id="savebar" hidden>
+        <span class="savebar-text">注意：你有尚未儲存的修改！</span>
+        <div class="savebar-actions">
+          <button type="button" class="btn" id="savebar-reset">還原</button>
+          <button type="submit" class="btn primary">儲存修改</button>
+        </div>
       </div>
     </form>
   <% } else { %>

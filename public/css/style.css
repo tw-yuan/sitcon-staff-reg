@@ -689,3 +689,57 @@ code.copyable:hover { background: #dde8ff; }
   flex-wrap: wrap;
   margin: 10px 0 6px;
 }
+
+/* ---------- 修改頁：未儲存變更浮動列（Discord 式） ---------- */
+.savebar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 50;
+  width: calc(100% - 32px);
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  background: var(--text);
+  color: #fff;
+  border-radius: var(--r);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.28);
+  animation: savebar-in 0.18s ease-out;
+}
+.savebar[hidden] { display: none; }
+.savebar-text { font-weight: 600; font-size: 0.95rem; }
+.savebar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.savebar .btn { border-color: transparent; }
+.savebar .btn:not(.primary) { background: transparent; color: #e6e9f0; }
+.savebar .btn:not(.primary):hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+/* 浮動列顯示時，頁尾留空間避免蓋住最後的欄位 */
+body.has-savebar { padding-bottom: 84px; }
+
+@keyframes savebar-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@media (max-width: 640px) {
+  .savebar { flex-wrap: wrap; bottom: 10px; width: calc(100% - 20px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .savebar { animation: none; }
+}
+
+/* 儲存鈕的載入轉圈（送出後顯示，避免使用者不確定有沒有按到） */
+.btn .spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: -2px;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

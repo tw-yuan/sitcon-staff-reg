@@ -1,6 +1,17 @@
 <%
   var v = values[f.key];
   var selected = Array.isArray(v) ? v.map(String) : (v !== undefined && v !== '' ? [String(v)] : []);
+  // 儲存時「其他」已解析成自填文字（不會存 __other__），所以編輯頁回填時：
+  // 不在選項清單裡的值視為「其他」的內容，改為勾選「其他」並填回文字框。
+  var otherText = values[f.key + '__other'] !== undefined ? String(values[f.key + '__other']) : '';
+  if (f.allowOther && Array.isArray(f.options)) {
+    var custom = selected.filter(function (s) { return s !== '__other__' && f.options.indexOf(s) < 0; });
+    if (custom.length) {
+      selected = selected.filter(function (s) { return f.options.indexOf(s) >= 0; });
+      selected.push('__other__');
+      if (!otherText) otherText = custom.join(', ');
+    }
+  }
 %>
 <% if (f.type === 'statement') { %>
 <div class="statement">
@@ -33,14 +44,14 @@
       <% f.options.forEach(function (o) { %><option value="<%= o %>" <%= selected.indexOf(o) >= 0 ? 'selected' : '' %>><%= o %></option><% }); %>
       <% if (f.allowOther) { %><option value="__other__" <%= selected.indexOf('__other__') >= 0 ? 'selected' : '' %>>其他…</option><% } %>
     </select>
-    <% if (f.allowOther) { %><input type="text" name="<%= f.key %>__other" value="<%= values[f.key + '__other'] || '' %>" placeholder="若選「其他」請填寫" style="margin-top:6px"><% } %>
+    <% if (f.allowOther) { %><input type="text" name="<%= f.key %>__other" value="<%= otherText %>" placeholder="若選「其他」請填寫" style="margin-top:6px"><% } %>
   <% } else if (f.type === 'single_select') { %>
     <% f.options.forEach(function (o, oi) { %>
       <label class="opt"><input type="radio" name="<%= f.key %>" value="<%= o %>" <%= selected.indexOf(o) >= 0 ? 'checked' : '' %> <%= f.required && oi === 0 ? 'required' : '' %> <% if (f.optionJumps[o]) { %>data-jump="<%= f.optionJumps[o] %>"<% } %>> <%= o %></label>
     <% }); %>
     <% if (f.allowOther) { %>
       <label class="opt"><input type="radio" name="<%= f.key %>" value="__other__" <%= selected.indexOf('__other__') >= 0 ? 'checked' : '' %>> 其他：</label>
-      <input type="text" name="<%= f.key %>__other" value="<%= values[f.key + '__other'] || '' %>" placeholder="請填寫">
+      <input type="text" name="<%= f.key %>__other" value="<%= otherText %>" placeholder="請填寫">
     <% } %>
   <% } else if (f.type === 'multi_select') { %>
     <% f.options.forEach(function (o, oi) { %>
@@ -48,7 +59,7 @@
     <% }); %>
     <% if (f.allowOther) { %>
       <label class="opt"><input type="checkbox" name="<%= f.key %>" value="__other__" <%= selected.indexOf('__other__') >= 0 ? 'checked' : '' %>> 其他：</label>
-      <input type="text" name="<%= f.key %>__other" value="<%= values[f.key + '__other'] || '' %>" placeholder="請填寫">
+      <input type="text" name="<%= f.key %>__other" value="<%= otherText %>" placeholder="請填寫">
     <% } %>
   <% } else if (f.type === 'file') { %>
     <input type="file" name="<%= f.key %>" <%= f.required ? 'required' : '' %>>
