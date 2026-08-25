@@ -1,8 +1,12 @@
 <%- include('partials/header', { title: 'SITCON 2027 工人登錄表單', flash: flash }) %>
+<% var hasEditable = grouped.some(function (g) { return g.fields.some(function (f) { return f.workerEditable; }); }); %>
 <div class="card">
   <h1>SITCON 2027 工人登錄表單</h1>
   <p class="muted">像 Google 表單一樣填寫即可，帳號欄位已自動帶入、無法修改。<br>如有問題請找行政組 Yuan（TG: <a href="https://t.me/yuan_tw_1111" target="_blank" rel="noopener">@yuan_tw_1111</a>）</p>
   <p class="muted small">📝 系統會自動保留你已填的內容（檔案除外），重整、關掉、甚至換裝置登入同一帳號都會還原。</p>
+  <% if (hasEditable) { %>
+    <p class="muted small">✏️ 標有「<span class="badge-editable">可事後修改</span>」的欄位，送出後仍可透過確認信中的專屬連結自行更改，不用現在就想到完美。</p>
+  <% } %>
 
   <section class="identity">
     <h3>已驗證帳號</h3>
@@ -19,7 +23,7 @@
         <% if (g.section.description) { %><p class="muted section-desc"><%= g.section.description %></p><% } %>
 
         <% g.fields.forEach(function (f) { %>
-          <%- include('partials/field', { f: f, values: values, errors: errors }) %>
+          <%- include('partials/field', { f: f, values: values, errors: errors, showEditableBadge: true }) %>
         <% }); %>
 
         <div class="section-nav">
@@ -30,7 +34,6 @@
       </div>
     <% }); %>
 
-    <% var hasEditable = grouped.some(function (g) { return g.fields.some(function (f) { return f.workerEditable; }); }); %>
     <div class="summary-step" hidden>
       <h2 class="section-title">確認你的填寫內容</h2>
       <p class="muted">送出前請再檢查一次；若有需要可返回修改。</p>

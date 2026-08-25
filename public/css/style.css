@@ -340,6 +340,20 @@ input[type=checkbox], input[type=radio] { accent-color: var(--primary); }
 .badge.ok { background: var(--ok-weak); color: var(--ok); }
 .badge.warn { background: var(--warn-weak); color: var(--warn); }
 
+/* 欄位標籤旁的「可事後修改」小徽章（輔助資訊，刻意低調） */
+.badge-editable {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--primary-weak);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.6;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
 .status {
   display: inline-block;
   padding: 3px 10px;

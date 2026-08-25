@@ -209,7 +209,11 @@ document.addEventListener('change', function (e) {
   }
   function fieldLabel(field) {
     var lab = field.querySelector(':scope > label');
-    return lab ? lab.textContent.replace(/\*/g, '').trim() : '';
+    if (!lab) return '';
+    // 去掉必填星號與「可事後修改」徽章，只留欄位名稱本身
+    var clone = lab.cloneNode(true);
+    clone.querySelectorAll('.req, .badge-editable').forEach(function (el) { el.remove(); });
+    return clone.textContent.replace(/\*/g, '').trim();
   }
   function labelOfOption(input) {
     var opt = input.closest('.opt');
@@ -253,8 +257,10 @@ document.addEventListener('change', function (e) {
         var label = fieldLabel(field);
         if (!label) return;
         var val = fieldValue(field);
+        var editable = !!field.querySelector(':scope > label .badge-editable');
         rows.push(
           '<div class="sum-row"><div class="sum-label">' + esc(label) +
+          (editable ? ' <span class="badge-editable">✏️ 可事後修改</span>' : '') +
           '</div><div class="sum-value">' + (val ? esc(val).replace(/\n/g, '<br>') : '<span class="muted">（未填）</span>') +
           '</div></div>',
         );
