@@ -9,6 +9,7 @@ import {
   createSubmission,
   findByIdentity,
   findByEditToken,
+  sameAnswer,
   setSheetRow,
   getSubmission,
   updateAnswers,
@@ -401,9 +402,8 @@ registerRouter.post('/edit/:token', upload.any(), async (req, res, next) => {
       }
     }
 
-    // 比對新舊答案，找出實際有變動的欄位（含分支改變被清除的答案），供 Telegram 通知列出
-    const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-    const changedFields = editableAll.filter((f) => !same(sub.answers[f.key], answers[f.key]));
+    // 比對新舊答案，找出實際有變動的欄位（含分支改變被清除的答案；空值視為未填），供 Telegram 通知列出
+    const changedFields = editableAll.filter((f) => !sameAnswer(sub.answers[f.key], answers[f.key]));
 
     updateAnswers(sub.id, answers);
     logAudit('worker', 'answers_edited_by_worker', sub.id, { keys: editable.map((f) => f.key) });

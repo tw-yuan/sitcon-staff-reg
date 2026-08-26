@@ -4,6 +4,7 @@ import {
   STATUS_LABELS,
   deleteSubmission,
   getSubmission,
+  sameAnswer,
   setSheetRow,
   setStatus,
   setWorkgroup,
@@ -251,9 +252,8 @@ reviewRouter.post('/:id/answers', async (req, res, next) => {
         answers[f.key] = String(req.body[f.key]);
       }
     }
-    // 與工人自行修改相同：比對新舊答案找出實際變動的欄位，發 Telegram 通知
-    const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-    const changedFields = fields.filter((f) => !same(sub.answers[f.key], answers[f.key]));
+    // 與工人自行修改相同：比對新舊答案找出實際變動的欄位（空值視為未填），發通知
+    const changedFields = fields.filter((f) => !sameAnswer(sub.answers[f.key], answers[f.key]));
     updateAnswers(id, answers);
     await syncSheet(id);
     logAudit(req.session.admin!.email, 'answers_edited', id, {});

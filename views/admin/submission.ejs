@@ -65,7 +65,18 @@
         </tr>
       <% }); %>
     </table>
-    <button class="btn small" type="submit">儲存修改</button>
+    <%# 無 JS 時的備援儲存鈕；有 JS 時隱藏，改用下方浮動儲存列 %>
+    <div id="edit-save-fallback">
+      <button class="btn small" type="submit">儲存修改</button>
+    </div>
+    <%# Discord 式未儲存提示列（同工人編輯頁）：有欄位變動時由 app.js 顯示 %>
+    <div class="savebar" id="savebar" hidden>
+      <span class="savebar-text">注意：你有尚未儲存的修改！儲存後會通知工人。</span>
+      <div class="savebar-actions">
+        <button type="button" class="btn" id="savebar-reset">還原</button>
+        <button type="submit" class="btn primary">儲存修改</button>
+      </div>
+    </div>
   </form>
 
   <h3>權限開通狀態</h3>

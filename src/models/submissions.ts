@@ -181,6 +181,21 @@ export function setSheetRow(id: number, row: number): void {
   db.prepare('UPDATE submissions SET sheet_row = ? WHERE id = ?').run(row, id);
 }
 
+/**
+ * 判斷兩個答案是否等值。undefined／null／空字串／空陣列一律視為「未填」：
+ * 表單會把沒填的欄位送成空字串，而工人沒答過的欄位在資料庫是「沒有這個 key」，
+ * 不正規化的話這兩者比對不相等，會被誤判成有變更（通知就會多列一堆沒動過的欄位）。
+ */
+export function sameAnswer(a: unknown, b: unknown): boolean {
+  const norm = (v: unknown): unknown => {
+    if (v === undefined || v === null) return null;
+    if (typeof v === 'string' && v.trim() === '') return null;
+    if (Array.isArray(v) && v.length === 0) return null;
+    return v;
+  };
+  return JSON.stringify(norm(a)) === JSON.stringify(norm(b));
+}
+
 export function updateAnswers(id: number, answers: Record<string, unknown>): void {
   db.prepare("UPDATE submissions SET answers_json = ?, updated_at = datetime('now') WHERE id = ?").run(
     JSON.stringify(answers),

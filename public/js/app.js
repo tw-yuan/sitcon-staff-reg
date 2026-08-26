@@ -578,11 +578,11 @@ function debounce(fn, ms) {
   });
 })();
 
-// (5) 修改頁 /edit/:token：Discord 式「未儲存變更」浮動列。
-//     有欄位變動才從頁面底部滑出；「還原」把表單恢復成伺服器渲染的原值。
+// (5) Discord 式「未儲存變更」浮動列：修改頁 /edit/:token 與後台登錄詳情頁共用。
+//     綁定包含 #savebar 的那個表單；有欄位變動才從頁面底部滑出，「還原」恢復成伺服器渲染的原值。
 (function initUnsavedBar() {
-  var form = document.querySelector('form[action^="/edit/"]');
   var bar = document.getElementById('savebar');
+  var form = bar && bar.closest('form');
   if (!form || !bar) return;
   var fallback = document.getElementById('edit-save-fallback');
   if (fallback) fallback.hidden = true; // 無 JS 備援鈕；JS 可用時改走浮動列
