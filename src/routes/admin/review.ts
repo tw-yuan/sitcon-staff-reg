@@ -27,7 +27,7 @@ import {
   seedTasks,
 } from '../../services/provisioning';
 import { updateSubmissionRow, upsertSubmissionRow } from '../../services/sheets';
-import { sendApprovedMail, sendRejectedMail } from '../../services/mailer';
+import { sendAdminEditedMail, sendApprovedMail, sendRejectedMail } from '../../services/mailer';
 import { notifyAnswersUpdated } from '../../services/telegramNotify';
 
 export const reviewRouter = Router();
@@ -257,10 +257,18 @@ reviewRouter.post('/:id/answers', async (req, res, next) => {
     updateAnswers(id, answers);
     await syncSheet(id);
     logAudit(req.session.admin!.email, 'answers_edited', id, {});
+    const fresh = getSubmission(id)!;
     void notifyAnswersUpdated(
-      getSubmission(id)!,
+      fresh,
       changedFields.map((f) => f.label),
       req.session.admin!.email, // 通知標示「由 <email> 修改」
+    );
+    // 同時寄 email 告知工人本人：行政組更新了哪些欄位（含更新後的值）
+    const fmt = (v: unknown) =>
+      Array.isArray(v) ? v.join('、') : String(v ?? '').trim() || '（已清空）';
+    void sendAdminEditedMail(
+      fresh,
+      changedFields.map((f) => `${f.label}：${fmt(answers[f.key])}`),
     );
     req.session.flash = '已更新工人資料';
     res.redirect(`/admin/submissions/${id}`);

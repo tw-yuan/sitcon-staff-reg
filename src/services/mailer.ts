@@ -85,7 +85,10 @@ export interface MailTemplateMeta {
   body: string; // 預設內文（HTML）
 }
 
-export const MAIL_TEMPLATES: Record<'received' | 'approved' | 'rejected', MailTemplateMeta> = {
+export const MAIL_TEMPLATES: Record<
+  'received' | 'approved' | 'rejected' | 'adminEdited',
+  MailTemplateMeta
+> = {
   received: {
     subjectKey: 'mail_received_subject',
     bodyKey: 'mail_received_body',
@@ -120,6 +123,18 @@ export const MAIL_TEMPLATES: Record<'received' | 'approved' | 'rejected', MailTe
       '<p>你的登錄資料需要修正。</p>' +
       '{{reason}}' +
       '<p>請聯絡行政組協助處理。</p>',
+  },
+  adminEdited: {
+    subjectKey: 'mail_admin_edited_subject',
+    bodyKey: 'mail_admin_edited_body',
+    label: '行政組修改資料（寄給工人）',
+    vars: ['{{email}}', '{{workgroup}}', '{{fieldsList}}', '{{editLink}}'],
+    subject: '【SITCON 2027】行政組更新了你的工人登錄資料',
+    body:
+      '<h2>你的登錄資料已由行政組更新</h2>' +
+      '<p>行政組更新了你（{{email}}）的以下資料：</p>' +
+      '{{fieldsList}}' +
+      '<p>若這不是你預期的變更，或內容有誤，請聯絡行政組。</p>',
   },
 };
 
@@ -186,6 +201,24 @@ export function sendApprovedMail(sub: Submission, grantedLines: string[]): Promi
     MAIL_TEMPLATES.approved,
     { email, workgroup: wg },
     { email: esc(email), workgroup: esc(wg), grantedList: list },
+    editLinkFor(sub),
+  );
+}
+
+/**
+ * 行政組在後台修改工人資料後通知本人。
+ * changedLines＝「欄位標題：新值」清單（純文字，這裡再轉 HTML）；沒有實際變更時不寄。
+ */
+export function sendAdminEditedMail(sub: Submission, changedLines: string[]): Promise<boolean> {
+  if (changedLines.length === 0) return Promise.resolve(false);
+  const list = `<ul>${changedLines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+  const email = sub.googleEmail;
+  const wg = workgroupName(sub);
+  return sendTemplate(
+    sub,
+    MAIL_TEMPLATES.adminEdited,
+    { email, workgroup: wg },
+    { email: esc(email), workgroup: esc(wg), fieldsList: list },
     editLinkFor(sub),
   );
 }
