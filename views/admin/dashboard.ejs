@@ -17,6 +17,15 @@
     <% }); %>
   </div>
 
+  <% if (sheetsReady) { %>
+    <div class="test-bar">
+      <form method="post" action="/admin/sheet-upsert-all" onsubmit="return confirm('確定要把全部登錄資料 upsert 進 Google Sheet？（以 Email 為鍵：有列更新、沒列新增）')">
+        <button class="btn small" type="submit">↻ Upsert 全部人資料到 Google Sheet</button>
+      </form>
+      <span class="muted small">試算表剛分享給 service account、或本地資料重建後，可一次補齊 Sheet</span>
+    </div>
+  <% } %>
+
   <div class="notice <%= formOpen ? '' : 'danger' %>">
     <p>
       表單狀態：

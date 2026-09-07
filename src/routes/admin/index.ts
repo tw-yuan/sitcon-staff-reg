@@ -3,7 +3,8 @@ import { timingSafeEqual } from 'crypto';
 import { requireAdmin, takeFlash } from '../../auth/session';
 import { config, featureReady } from '../../config';
 import { getSetupKey } from '../../runtimeConfig';
-import { listSubmissions, Status } from '../../models/submissions';
+import { listSubmissions, setSheetRow, Status } from '../../models/submissions';
+import { upsertSubmissionRow } from '../../services/sheets';
 import { isFormOpen, setFormOpen, getClosedMessage, setClosedMessage } from '../../models/formState';
 import { nicknameOf } from '../../services/nickname';
 import { logAudit } from '../../models/audit';
@@ -116,7 +117,44 @@ adminRouter.get('/', (req, res) => {
     features: featureSummary(),
     formOpen: isFormOpen(),
     closedMessage: getClosedMessage(),
+    sheetsReady: featureReady.sheets(),
   });
+});
+
+// 把資料庫裡「所有」登錄一次 upsert 進 Google Sheet（以 Email 為鍵：有列就更新、沒列就新增）。
+// 用途：試算表剛分享給 service account、或本地資料重建後，一次補齊 Sheet。
+// 失敗不整批中斷；逐筆累計成功／失敗，最後回報摘要與第一個錯誤原因。
+adminRouter.post('/sheet-upsert-all', async (req, res) => {
+  if (!featureReady.sheets()) {
+    req.session.flash = 'Google Sheet 尚未設定，無法寫入';
+    res.redirect('/admin');
+    return;
+  }
+  const subs = listSubmissions();
+  let ok = 0;
+  let failed = 0;
+  let firstError = '';
+  for (const sub of subs) {
+    try {
+      const { row } = await upsertSubmissionRow(sub);
+      if (row) setSheetRow(sub.id, row);
+      ok += 1;
+    } catch (err) {
+      failed += 1;
+      if (!firstError) firstError = err instanceof Error ? err.message : String(err);
+    }
+  }
+  logAudit(req.session.admin!.email, 'sheet_upsert_all', null, {
+    total: subs.length,
+    ok,
+    failed,
+    firstError: firstError || undefined,
+  });
+  req.session.flash =
+    failed === 0
+      ? `已同步全部 ${ok} 筆到 Google Sheet`
+      : `Google Sheet 同步完成：成功 ${ok} 筆、失敗 ${failed} 筆（第一個錯誤：${firstError}）`;
+  res.redirect('/admin');
 });
 
 // 表單總開關：截止後工人不能新填、也不能用修改連結編輯。
