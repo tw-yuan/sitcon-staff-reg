@@ -247,6 +247,14 @@ code {
 .req { color: var(--danger); margin-left: 2px; }
 .err { color: var(--danger); font-size: 0.85rem; margin: 6px 0 0; font-weight: 500; }
 
+/* 修改頁驗證失敗的「需要確認」彙整框 */
+#edit-error-summary { outline: none; scroll-margin-top: 16px; }
+.error-summary-list { margin: 6px 0 0; padding-left: 20px; font-size: 0.9rem; }
+.error-summary-list li { margin: 4px 0; }
+.error-summary-list a { color: var(--danger); font-weight: 600; }
+/* 點警告框連結跳到欄位時，讓欄位不要貼齊視窗頂端 */
+.field { scroll-margin-top: 16px; }
+
 /* 單選 / 複選：卡片式可點選列 */
 .opt {
   display: flex;

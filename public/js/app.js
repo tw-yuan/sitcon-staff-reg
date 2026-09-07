@@ -634,6 +634,20 @@ function debounce(fn, ms) {
   });
 })();
 
+// 修改頁驗證失敗時：頁面重整後把「需要確認」的警告框捲進視野並聚焦，
+// 讓使用者一眼看到哪裡沒過，而不是停在最上面不知所措。
+(function focusEditErrorSummary() {
+  var box = document.getElementById('edit-error-summary');
+  if (!box) return;
+  try {
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    box.focus({ preventScroll: true });
+  } catch (e) {
+    box.scrollIntoView();
+    box.focus();
+  }
+})();
+
 // ---------- App 內建瀏覽器（Telegram / LINE 等）偵測與逃脫 ----------
 // 網站無法強制 Telegram 改用外部瀏覽器；只能偵測後引導使用者跳出，
 // 否則 Google OAuth 會因 disallowed_useragent 被擋。

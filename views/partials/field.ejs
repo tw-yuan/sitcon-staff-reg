@@ -25,7 +25,7 @@
   <% if (f.label) { %><figcaption class="muted small"><%= f.label %></figcaption><% } %>
 </figure>
 <% } else { %>
-<div class="field <%= errors[f.key] ? 'has-error' : '' %>">
+<div class="field <%= errors[f.key] ? 'has-error' : '' %>" id="field-<%= f.key %>">
   <% if (f.imagePath) { %><figure class="form-image field-image"><img src="<%= f.imagePath %>" alt="" loading="lazy"></figure><% } %>
   <label><%= f.label %><% if (f.required) { %> <span class="req">*</span><% } %><% if (f.workerEditable && typeof showEditableBadge !== 'undefined' && showEditableBadge) { %> <span class="badge-editable">✏️ 可事後修改</span><% } %></label>
   <% if (f.helpText) { %><p class="help"><%= f.helpText %></p><% } %>

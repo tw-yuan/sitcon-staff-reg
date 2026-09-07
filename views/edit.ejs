@@ -16,14 +16,13 @@
     <div class="ro"><label>狀態</label><input value="<%= sub.status === 'pending' ? '待審核' : sub.status === 'approved' ? '已核准' : '已退回' %>" readonly></div>
   </section>
 
-  <h2>你填寫的內容</h2>
-  <% if (!allFields.length) { %>
-    <p class="muted">（尚無填答欄位）</p>
-  <% } else { %>
+  <% if (allFields.length) { %>
+    <h2>其他已填內容（不可修改）</h2>
+    <p class="muted small">以下欄位無法自行更改，如需更動請聯絡行政組。可修改的欄位請見下方表單。</p>
     <table class="kv">
       <% allFields.forEach(function (f) { var v = sub.answers[f.key]; %>
         <tr>
-          <th><%= f.label %><% if (f.workerEditable) { %> <span class="badge ok">可修改</span><% } %></th>
+          <th><%= f.label %></th>
           <td>
             <% if (f.type === 'file') { %>
               <% if (v && v.link) { %><a href="<%= v.link %>" target="_blank" rel="noopener"><%= v.name %></a>
@@ -38,6 +37,18 @@
 
   <% if (fields.length) { %>
     <h2>修改開放編輯的欄位</h2>
+    <% var errorFields = fields.filter(function (f) { return errors[f.key]; }); %>
+    <% if (errorFields.length) { %>
+      <div class="notice danger" id="edit-error-summary" role="alert" tabindex="-1">
+        <p><strong>⚠️ 尚未儲存：有 <%= errorFields.length %> 個欄位需要確認</strong></p>
+        <p class="muted small">請修正以下欄位後再按「儲存修改」。點欄位名稱可直接跳到該題。</p>
+        <ul class="error-summary-list">
+          <% errorFields.forEach(function (f) { %>
+            <li><a href="#field-<%= f.key %>"><%= f.label %></a>：<%= errors[f.key] %></li>
+          <% }); %>
+        </ul>
+      </div>
+    <% } %>
     <form method="post" action="/edit/<%= token %>" enctype="multipart/form-data" novalidate>
       <% fields.forEach(function (f) { %>
         <%- include('partials/field', { f: f, values: values, errors: errors }) %>

@@ -306,14 +306,18 @@ function renderEdit(
     telegramUsername: sub.telegramUsername,
     telegramId: sub.telegramId,
   };
-  // 唯讀檢視也只列「這筆登錄實際經過的路徑」上的填答欄位
+  // 唯讀檢視也只列「這筆登錄實際經過的路徑」上的填答欄位；
+  // 開放編輯的欄位已在下方表單中帶值顯示，這裡不重複列出。
   const visited = visitedSectionsFor(rawFromAnswers(sub.answers));
+  const editableKeys = new Set(fields.map((f) => f.key));
   res.render('edit', {
     token: sub.editToken,
     sub,
     fields: interpolateFields(fields, idVars),
     allFields: interpolateFields(
-      listFields().filter((f) => !isDisplayType(f.type) && visited.has(f.sectionId)),
+      listFields().filter(
+        (f) => !isDisplayType(f.type) && visited.has(f.sectionId) && !editableKeys.has(f.key),
+      ),
       idVars,
     ),
     values,
