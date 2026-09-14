@@ -765,3 +765,22 @@ body.has-savebar { padding-bottom: 84px; }
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Upsert 全部資料的進度條 */
+.progress { flex-basis: 100%; display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.progress-track {
+  flex: 1;
+  height: 8px;
+  min-width: 140px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width .25s ease;
+}
+.progress-text { white-space: nowrap; }

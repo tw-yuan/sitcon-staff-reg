@@ -18,11 +18,13 @@
   </div>
 
   <% if (sheetsReady) { %>
-    <div class="test-bar">
-      <form method="post" action="/admin/sheet-upsert-all" onsubmit="return confirm('確定要把全部登錄資料 upsert 進 Google Sheet？（以 Email 為鍵：有列更新、沒列新增）')">
-        <button class="btn small" type="submit">↻ Upsert 全部人資料到 Google Sheet</button>
-      </form>
-      <span class="muted small">試算表剛分享給 service account、或本地資料重建後，可一次補齊 Sheet</span>
+    <div class="test-bar js-upsert-all-bar">
+      <button class="btn small js-upsert-all" type="button">↻ Upsert 全部人資料到 Google Sheet</button>
+      <span class="muted small js-upsert-all-hint">試算表剛分享給 service account、或本地資料重建後，可一次補齊 Sheet</span>
+      <div class="progress js-upsert-all-progress" hidden>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <span class="progress-text small muted"></span>
+      </div>
     </div>
   <% } %>
 

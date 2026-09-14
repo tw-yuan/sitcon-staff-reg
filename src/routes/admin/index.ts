@@ -4,7 +4,7 @@ import { requireAdmin, takeFlash } from '../../auth/session';
 import { config, featureReady } from '../../config';
 import { getSetupKey } from '../../runtimeConfig';
 import { listSubmissions, setSheetRow, Status } from '../../models/submissions';
-import { upsertSubmissionRow } from '../../services/sheets';
+import { syncAllSubmissionRows } from '../../services/sheets';
 import { isFormOpen, setFormOpen, getClosedMessage, setClosedMessage } from '../../models/formState';
 import { nicknameOf } from '../../services/nickname';
 import { logAudit } from '../../models/audit';
@@ -123,38 +123,109 @@ adminRouter.get('/', (req, res) => {
 
 // 把資料庫裡「所有」登錄一次 upsert 進 Google Sheet（以 Email 為鍵：有列就更新、沒列就新增）。
 // 用途：試算表剛分享給 service account、或本地資料重建後，一次補齊 Sheet。
-// 失敗不整批中斷；逐筆累計成功／失敗，最後回報摘要與第一個錯誤原因。
-adminRouter.post('/sheet-upsert-all', async (req, res) => {
+//
+// 這件事會跑好幾秒到數十秒，同步等它做完會被反向代理判成逾時（504），
+// 所以改成「背景執行 + 前端輪詢進度」：POST 立刻回一個工作狀態，前端再打 status 更新進度條。
+type UpsertJob = {
+  startedAt: number;
+  finishedAt: number | null;
+  phase: string;
+  total: number;
+  done: number;
+  updated: number;
+  appended: number;
+  failed: number;
+  error: string;
+};
+
+let upsertJob: UpsertJob | null = null;
+
+function jobRunning(): boolean {
+  return !!upsertJob && upsertJob.finishedAt === null;
+}
+
+async function runUpsertAll(job: UpsertJob, actor: string): Promise<void> {
+  try {
+    // 依登錄時間由舊到新，讓需要新增的資料列在表上也照時間排
+    const subs = listSubmissions().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    job.total = subs.length;
+    const result = await syncAllSubmissionRows(subs, (p) => {
+      job.phase = p.phase;
+      job.total = p.total;
+      job.done = p.done;
+      job.updated = p.updated;
+      job.appended = p.appended;
+      job.failed = p.failed;
+    });
+    // 把每筆實際所在列寫回本地，避免之後的單筆更新寫到別人的列
+    for (const [id, row] of result.rowById) setSheetRow(id, row);
+    job.error = result.firstError;
+    logAudit(actor, 'sheet_upsert_all', null, {
+      total: result.total,
+      updated: result.updated,
+      appended: result.appended,
+      failed: result.failed,
+      firstError: result.firstError || undefined,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    job.phase = '失敗';
+    job.error = msg;
+    job.failed = job.total - job.done;
+    logAudit(actor, 'sheet_upsert_all_failed', null, { error: msg });
+  } finally {
+    job.finishedAt = Date.now();
+  }
+}
+
+function jobView(job: UpsertJob) {
+  const running = job.finishedAt === null;
+  const summary = running
+    ? job.phase
+    : job.failed > 0 || job.error
+      ? `完成：更新 ${job.updated} 筆、新增 ${job.appended} 筆、失敗 ${job.failed} 筆` +
+        (job.error ? `（${job.error}）` : '')
+      : `已同步全部 ${job.updated + job.appended} 筆（更新 ${job.updated}、新增 ${job.appended}）`;
+  return {
+    running,
+    phase: job.phase,
+    total: job.total,
+    done: job.done,
+    updated: job.updated,
+    appended: job.appended,
+    failed: job.failed,
+    ok: !running && job.failed === 0 && !job.error,
+    summary,
+  };
+}
+
+adminRouter.post('/sheet-upsert-all', (req, res) => {
   if (!featureReady.sheets()) {
-    req.session.flash = 'Google Sheet 尚未設定，無法寫入';
-    res.redirect('/admin');
+    res.status(400).json({ ok: false, message: 'Google Sheet 尚未設定，無法寫入' });
     return;
   }
-  const subs = listSubmissions();
-  let ok = 0;
-  let failed = 0;
-  let firstError = '';
-  for (const sub of subs) {
-    try {
-      const { row } = await upsertSubmissionRow(sub);
-      if (row) setSheetRow(sub.id, row);
-      ok += 1;
-    } catch (err) {
-      failed += 1;
-      if (!firstError) firstError = err instanceof Error ? err.message : String(err);
-    }
+  if (jobRunning()) {
+    res.json({ ok: true, job: jobView(upsertJob!) }); // 已經在跑就直接回目前進度，不重複開工
+    return;
   }
-  logAudit(req.session.admin!.email, 'sheet_upsert_all', null, {
-    total: subs.length,
-    ok,
-    failed,
-    firstError: firstError || undefined,
-  });
-  req.session.flash =
-    failed === 0
-      ? `已同步全部 ${ok} 筆到 Google Sheet`
-      : `Google Sheet 同步完成：成功 ${ok} 筆、失敗 ${failed} 筆（第一個錯誤：${firstError}）`;
-  res.redirect('/admin');
+  const job: UpsertJob = {
+    startedAt: Date.now(),
+    finishedAt: null,
+    phase: '準備中…',
+    total: 0,
+    done: 0,
+    updated: 0,
+    appended: 0,
+    failed: 0,
+    error: '',
+  };
+  upsertJob = job;
+  void runUpsertAll(job, req.session.admin!.email);
+  res.json({ ok: true, job: jobView(job) });
+});
+
+adminRouter.get('/sheet-upsert-all/status', (req, res) => {
+  res.json({ ok: true, job: upsertJob ? jobView(upsertJob) : null });
 });
 
 // 表單總開關：截止後工人不能新填、也不能用修改連結編輯。

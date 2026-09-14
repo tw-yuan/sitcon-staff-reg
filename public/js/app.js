@@ -693,3 +693,83 @@ function debounce(fn, ms) {
     }
   });
 })();
+
+// 「Upsert 全部人資料到 Google Sheet」：後端背景跑，這裡輪詢進度畫進度條。
+// （同步等後端做完會被反向代理判逾時回 504，所以不能用一般表單送出。）
+(function () {
+  var bar = document.querySelector('.js-upsert-all-bar');
+  if (!bar) return;
+  var btn = bar.querySelector('.js-upsert-all');
+  var hint = bar.querySelector('.js-upsert-all-hint');
+  var box = bar.querySelector('.js-upsert-all-progress');
+  var fill = box.querySelector('.progress-fill');
+  var text = box.querySelector('.progress-text');
+  var timer = null;
+
+  function render(job) {
+    if (!job) return;
+    box.hidden = false;
+    if (hint) hint.hidden = true;
+    var pct = job.total > 0 ? Math.round((job.done / job.total) * 100) : (job.running ? 5 : 100);
+    fill.style.width = (job.running ? Math.max(pct, 5) : 100) + '%';
+    text.className = 'progress-text small ' + (job.running ? 'muted' : job.ok ? 'ok-text' : 'err-text');
+    text.textContent = job.running
+      ? job.phase + (job.total ? ' ' + job.done + ' / ' + job.total : '')
+      : (job.ok ? '✓ ' : '✗ ') + job.summary;
+    btn.disabled = job.running;
+    if (!job.running) stop();
+  }
+
+  function stop() {
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  function poll() {
+    fetch('/admin/sheet-upsert-all/status')
+      .then(function (r) { return r.json(); })
+      .then(function (data) { render(data.job); })
+      .catch(function () { /* 暫時讀不到就下次再試 */ });
+  }
+
+  function watch() {
+    stop();
+    timer = setInterval(poll, 1000);
+  }
+
+  btn.addEventListener('click', function () {
+    if (!window.confirm('確定要把全部登錄資料 upsert 進 Google Sheet？（以 Email 為鍵：有列更新、沒列新增）')) return;
+    btn.disabled = true;
+    box.hidden = false;
+    if (hint) hint.hidden = true;
+    fill.style.width = '5%';
+    text.className = 'progress-text small muted';
+    text.textContent = '啟動中…';
+    fetch('/admin/sheet-upsert-all', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) {
+          text.className = 'progress-text small err-text';
+          text.textContent = '✗ ' + (data.message || '啟動失敗');
+          btn.disabled = false;
+          return;
+        }
+        render(data.job);
+        watch();
+      })
+      .catch(function (err) {
+        text.className = 'progress-text small err-text';
+        text.textContent = '✗ ' + err;
+        btn.disabled = false;
+      });
+  });
+
+  // 若重新整理時後端還在跑（或剛跑完），接回進度
+  fetch('/admin/sheet-upsert-all/status')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.job) return;
+      render(data.job);
+      if (data.job.running) watch();
+    })
+    .catch(function () {});
+})();

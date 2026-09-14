@@ -41,7 +41,10 @@ function asArray(v: unknown): string[] {
 
 async function syncSheet(id: number): Promise<void> {
   try {
-    await updateSubmissionRow(getSubmission(id)!);
+    // updateSubmissionRow 會先確認本地 sheetRow 指到的真的是這個人，
+    // 對不上就以 Email 重新找列；回傳的實際列號要寫回本地，否則下次又會指錯。
+    const row = await updateSubmissionRow(getSubmission(id)!);
+    if (row) setSheetRow(id, row);
   } catch (err) {
     console.error('[sheets] 更新失敗', err);
   }
