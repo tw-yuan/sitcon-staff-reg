@@ -5,7 +5,7 @@
   "description": "SITCON 2027 工人登錄 + 審核 + 權限開通系統",
   "type": "commonjs",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -18,19 +18,18 @@
     "better-sqlite3-session-store": "^0.1.0",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "express-session": "^1.18.1",
-    "googleapis": "^144.0.0",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^9.0.3"
+    "googleapis": "^188.0.0",
+    "multer": "^2.5.0",
+    "nodemailer": "^10.2.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/express": "^4.17.21",
     "@types/express-session": "^1.18.1",
-    "@types/multer": "^1.4.12",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.10.7",
-    "@types/nodemailer": "^8.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

@@ -10,7 +10,7 @@
 
 | 項目 | 選擇 | 理由 |
 |---|---|---|
-| 語言/框架 | Node.js 20+ / TypeScript / Express | 輕量、三平台 API 生態成熟 |
+| 語言/框架 | Node.js 22+ / TypeScript / Express | 輕量、三平台 API 生態成熟 |
 | 前端 | EJS server-rendered + 原生 JS | 無額外前端 build，docker compose 一鍵起 |
 | 設定/schema/審核狀態/audit | **SQLite**（docker volume） | 動態表單 schema、工作組、權限範本、狀態需結構化查詢 |
 | 工人回應資料 | **Google Sheet** | 行政組直接檢視的正式資料落地 |
